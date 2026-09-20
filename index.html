@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0D1117" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Finance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ── TOKENS ─────────────────────────────────────────── */
+    :root {
+      --bg:          #0D1117;
+      --surface:     #161B22;
+      --surface2:    #1C2330;
+      --border:      #21262D;
+      --accent:      #6E7BF2;
+      --accent-dim:  rgba(110,123,242,0.12);
+      --positive:    #2DD4BF;
+      --positive-dim:rgba(45,212,191,0.12);
+      --negative:    #F87171;
+      --negative-dim:rgba(248,113,113,0.10);
+      --warn:        #FBBF24;
+      --text:        #E6EDF3;
+      --text2:       #8B949E;
+      --text3:       #4D5562;
+      --radius:      14px;
+      --radius-sm:   8px;
+
+      /* Category colors */
+      --cat-food:     #F97316;
+      --cat-transport:#3B82F6;
+      --cat-shopping: #A855F7;
+      --cat-groceries:#22C55E;
+      --cat-household:#EAB308;
+      --cat-health:   #EC4899;
+      --cat-entertainment:#06B6D4;
+      --cat-subscriptions:#8B5CF6;
+      --cat-transfer: #6B7280;
+      --cat-income:   #2DD4BF;
+      --cat-other:    #4D5562;
+    }
+
+    /* ── RESET ──────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    input, select, textarea { font-family: inherit; }
+
+    /* ── LAYOUT ─────────────────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 430px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .screen {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 0 80px 0;
+      padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    }
+    .screen.active { display: block; }
+
+    /* ── TOP BAR ─────────────────────────────────────────── */
+    .topbar {
+      padding: 56px 20px 16px;
+      padding-top: calc(56px + env(safe-area-inset-top, 0px));
+    }
+    .topbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .greeting { font-size: 13px; color: var(--text2); font-weight: 400; }
+    .topbar-title { font-size: 20px; font-weight: 600; }
+    .month-pill {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 12px;
+      color: var(--text2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* ── HERO SPEND CARD ─────────────────────────────────── */
+    .hero-card {
+      margin: 0 16px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+    }
+    .hero-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+    .hero-amount {
+      font-family: 'DM Mono', monospace;
+      font-size: 38px;
+      font-weight: 500;
+      color: var(--text);
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+    .hero-amount .currency { font-size: 22px; color: var(--text2); margin-right: 2px; }
+    .hero-sub {
+      display: flex;
+      gap: 20px;
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+    }
+    .hero-sub-item { flex: 1; }
+    .hero-sub-label { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
+    .hero-sub-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .val-positive { color: var(--positive); }
+    .val-negative { color: var(--negative); }
+
+    /* ── SECTION HEADER ──────────────────────────────────── */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px 10px;
+    }
+    .section-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+    .section-link { font-size: 13px; color: var(--accent); }
+
+    /* ── TRANSACTION LIST ────────────────────────────────── */
+    .txn-list { padding: 0 16px; display: flex; flex-direction: column; gap: 2px; }
+
+    .txn-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--surface);
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      transition: border-color 0.15s;
+    }
+    .txn-item:first-child { border-radius: var(--radius) var(--radius) var(--radius-sm) var(--radius-sm); }
+    .txn-item:last-child  { border-radius: var(--radius-sm) var(--radius-sm) var(--radius) var(--radius); }
+    .txn-item:only-child  { border-radius: var(--radius); }
+
+    .txn-dot {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .txn-info { flex: 1; min-width: 0; }
+    .txn-merchant {
+      font-size: 14px; font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .txn-meta { font-size: 11px; color: var(--text3); margin-top: 1px; }
+    .txn-amount {
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .txn-balance { font-size: 10px; color: var(--text3); text-align: right; margin-top: 1px; }
+
+    /* ── CATEGORY CHIPS ──────────────────────────────────── */
+    .category-tag {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    /* ── DONUT CHART ─────────────────────────────────────── */
+    .donut-wrap {
+      margin: 0 16px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .donut-inner {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .donut-svg { flex-shrink: 0; }
+    .donut-legend { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .legend-label { flex: 1; color: var(--text2); }
+    .legend-amount { font-family: 'DM Mono', monospace; font-size: 11px; }
+
+    /* ── INVESTMENT CARDS ────────────────────────────────── */
+    .inv-cards { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+
+    .inv-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .inv-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .inv-name { font-size: 14px; font-weight: 500; }
+    .inv-type-badge {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .badge-mf   { background: rgba(110,123,242,0.15); color: var(--accent); }
+    .badge-stock{ background: rgba(45,212,191,0.15);  color: var(--positive); }
+    .badge-crypto{background: rgba(251,191,36,0.15);  color: var(--warn); }
+
+    .inv-numbers {
+      display: flex;
+      gap: 0;
+    }
+    .inv-num { flex: 1; }
+    .inv-num-label { font-size: 10px; color: var(--text3); margin-bottom: 3px; }
+    .inv-num-value { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; }
+    .inv-num-change { font-size: 11px; margin-top: 2px; }
+
+    .long-term-block {
+      margin: 0 16px 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .long-term-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      cursor: pointer;
+    }
+    .long-term-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text2);
+    }
+    .lock-icon { font-size: 14px; }
+    .long-term-summary {
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      color: var(--text3);
+    }
+    .chevron { font-size: 12px; color: var(--text3); transition: transform 0.2s; }
+    .chevron.open { transform: rotate(180deg); }
+    .long-term-body { border-top: 1px solid var(--border); padding: 12px 16px; display: none; }
+    .long-term-body.open { display: block; }
+    .long-term-note {
+      font-size: 11px;
+      color: var(--text3);
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+
+    /* ── RECEIVABLES ─────────────────────────────────────── */
+    .recv-cards { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+    .recv-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .recv-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 600;
+      flex-shrink: 0;
+    }
+    .recv-info { flex: 1; }
+    .recv-name { font-size: 14px; font-weight: 500; }
+    .recv-reason { font-size: 11px; color: var(--text3); margin-top: 1px; }
+    .recv-amount { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; color: var(--positive); }
+    .recv-age { font-size: 10px; color: var(--text3); text-align: right; }
+
+    .recv-total-bar {
+      margin: 0 16px 12px;
+      background: var(--positive-dim);
+      border: 1px solid rgba(45,212,191,0.2);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .recv-total-label { font-size: 12px; color: var(--positive); }
+    .recv-total-amount { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; color: var(--positive); }
+
+    /* ── INCOME SECTION ──────────────────────────────────── */
+    .income-row {
+      margin: 0 16px 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .income-left { display: flex; flex-direction: column; gap: 3px; }
+    .income-name { font-size: 14px; font-weight: 500; }
+    .income-date { font-size: 11px; color: var(--text3); }
+    .income-right { text-align: right; }
+    .income-amount { font-family: 'DM Mono', monospace; font-size: 16px; color: var(--positive); }
+    .income-status { font-size: 10px; margin-top: 2px; }
+    .status-received { color: var(--positive); }
+    .status-expected { color: var(--warn); }
+
+    /* ── FAB (add expense) ───────────────────────────────── */
+    .fab {
+      position: fixed;
+      bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+      right: calc(50% - 215px + 16px);
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 24px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(110,123,242,0.4);
+      cursor: pointer;
+      border: none;
+      z-index: 50;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .fab:active { transform: scale(0.94); box-shadow: 0 2px 10px rgba(110,123,242,0.3); }
+
+    /* ── BOTTOM NAV ──────────────────────────────────────── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      z-index: 100;
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0 8px;
+      gap: 4px;
+      cursor: pointer;
+      color: var(--text3);
+      transition: color 0.15s;
+      font-size: 10px;
+      font-weight: 500;
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-icon { font-size: 20px; line-height: 1; }
+
+    /* ── MODAL ───────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      width: 100%; max-width: 430px;
+      background: var(--surface);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+      border-top: 1px solid var(--border);
+    }
+    .modal-title {
+      font-size: 16px; font-weight: 600;
+      margin-bottom: 20px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-close { color: var(--text3); font-size: 20px; cursor: pointer; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; }
+    .form-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 15px;
+      outline: none;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    .form-row { display: flex; gap: 10px; }
+    .form-row .form-group { flex: 1; }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+    .btn-secondary {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    /* ── EMPTY STATE ─────────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text3);
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 12px; }
+    .empty-text { font-size: 14px; }
+
+    /* ── SETTINGS ────────────────────────────────────────── */
+    .settings-section { padding: 0 16px; margin-bottom: 20px; }
+    .settings-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-row-left { display: flex; flex-direction: column; gap: 2px; }
+    .settings-row-title { font-size: 14px; }
+    .settings-row-sub { font-size: 11px; color: var(--text3); }
+    .settings-row-right { color: var(--text3); font-size: 13px; display: flex; align-items: center; gap: 6px; }
+
+    /* ── LOADING ─────────────────────────────────────────── */
+    .loading-pulse {
+      background: var(--surface2);
+      border-radius: 6px;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+
+    /* ── TOAST ───────────────────────────────────────────── */
+    .toast {
+      position: fixed;
+      top: calc(16px + env(safe-area-inset-top, 0px));
+      left: 50%; transform: translateX(-50%);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 18px;
+      font-size: 13px;
+      z-index: 999;
+      opacity: 0;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ── SCROLLBAR ───────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 0; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════════ HOME SCREEN ═══════════════ -->
+  <div class="screen active" id="screen-home">
+    <div class="topbar">
+      <div class="topbar-row">
+        <div>
+          <div class="greeting" id="greeting">Good morning</div>
+          <div class="topbar-title">Kahaan</div>
+        </div>
+        <button class="month-pill" id="month-selector">
+          <span id="current-month-label">Sep 2026</span>
+          <span>▾</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Hero spend card -->
+    <div class="hero-card">
+      <div class="hero-label">Spent this month</div>
+      <div class="hero-amount">
+        <span class="currency">₹</span><span id="home-total-spent">—</span>
+      </div>
+      <div class="hero-sub">
+        <div class="hero-sub-item">
+          <div class="hero-sub-label">Income</div>
+          <div class="hero-sub-value val-positive" id="home-income">₹—</div>
+        </div>
+        <div class="hero-sub-item">
+          <div class="hero-sub-label">Owed to me</div>
+          <div class="hero-sub-value val-positive" id="home-owed">₹—</div>
+        </div>
+        <div class="hero-sub-item">
+          <div class="hero-sub-label">Balance</div>
+          <div class="hero-sub-value" id="home-balance">₹—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent transactions -->
+    <div class="section-header">
+      <span class="section-title">Recent</span>
+      <button class="section-link" onclick="switchTab('expenses')">See all</button>
+    </div>
+    <div class="txn-list" id="home-recent-list">
+      <div class="empty-state">
+        <div class="empty-icon">💬</div>
+        <div class="empty-text">Waiting for your first IDFC SMS…</div>
+      </div>
+    </div>
+
+    <!-- Category breakdown -->
+    <div class="section-header" style="margin-top:16px">
+      <span class="section-title">This month</span>
+    </div>
+    <div class="donut-wrap">
+      <div class="donut-inner">
+        <svg class="donut-svg" width="110" height="110" viewBox="0 0 110 110" id="donut-svg">
+          <circle cx="55" cy="55" r="40" fill="none" stroke="var(--border)" stroke-width="16"/>
+          <text x="55" y="52" text-anchor="middle" fill="var(--text3)" font-size="10" font-family="DM Sans">no data</text>
+        </svg>
+        <div class="donut-legend" id="donut-legend">
+          <div style="color:var(--text3);font-size:12px">Add expenses to see breakdown</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ EXPENSES SCREEN ═══════════════ -->
+  <div class="screen" id="screen-expenses">
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="topbar-title">Expenses</div>
+        <button class="month-pill" onclick="showToast('Month filter coming soon')">
+          <span id="exp-month-label">Sep 2026</span> <span>▾</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="txn-list" id="expenses-list">
+      <div class="empty-state">
+        <div class="empty-icon">🧾</div>
+        <div class="empty-text">No transactions yet this month</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ INVESTMENTS SCREEN ═══════════════ -->
+  <div class="screen" id="screen-invest">
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="topbar-title">Investments</div>
+        <button class="btn-primary" style="width:auto;padding:7px 14px;font-size:13px;margin-top:0" onclick="openAddInvestment()">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Active portfolio summary -->
+    <div class="hero-card" style="margin-bottom:12px">
+      <div class="hero-label">Active portfolio</div>
+      <div class="hero-amount">
+        <span class="currency">₹</span><span id="inv-active-value">—</span>
+      </div>
+      <div class="hero-sub">
+        <div class="hero-sub-item">
+          <div class="hero-sub-label">Invested</div>
+          <div class="hero-sub-value" id="inv-active-invested">₹—</div>
+        </div>
+        <div class="hero-sub-item">
+          <div class="hero-sub-label">Returns</div>
+          <div class="hero-sub-value" id="inv-active-returns">—</div>
+        </div>
+        <div class="hero-sub-item">
+          <div class="hero-sub-label">Total invested</div>
+          <div class="hero-sub-value" id="inv-total-invested">₹—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="inv-cards" id="active-inv-list">
+      <div class="empty-state">
+        <div class="empty-icon">📈</div>
+        <div class="empty-text">Add your Groww and CoinDCX holdings</div>
+      </div>
+    </div>
+
+    <!-- Long-term holds (hidden by default) -->
+    <div class="long-term-block" id="long-term-block" style="margin-top:8px;display:none">
+      <div class="long-term-header" onclick="toggleLongTerm()">
+        <div class="long-term-label">
+          <span class="lock-icon">🔒</span>
+          Long-term holds
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="long-term-summary" id="lt-summary">₹— invested</span>
+          <span class="chevron" id="lt-chevron">▾</span>
+        </div>
+      </div>
+      <div class="long-term-body" id="lt-body">
+        <div class="long-term-note">These are long-term positions. P&L is hidden to keep the noise low.</div>
+        <div id="lt-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ PEOPLE / RECEIVABLES SCREEN ═══════════════ -->
+  <div class="screen" id="screen-people">
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="topbar-title">Owed to me</div>
+        <button class="btn-primary" style="width:auto;padding:7px 14px;font-size:13px" onclick="openAddDebt()">+ Add</button>
+      </div>
+    </div>
+
+    <div class="recv-total-bar" id="recv-total-bar" style="display:none">
+      <span class="recv-total-label">Total outstanding</span>
+      <span class="recv-total-amount" id="recv-total">₹0</span>
+    </div>
+
+    <div class="recv-cards" id="recv-list">
+      <div class="empty-state">
+        <div class="empty-icon">🤝</div>
+        <div class="empty-text">No one owes you anything right now</div>
+      </div>
+    </div>
+
+    <!-- Household reimbursements -->
+    <div class="section-header" style="margin-top:8px">
+      <span class="section-title">Household — parents owe</span>
+      <button class="section-link" onclick="openAddHousehold()">+ Add</button>
+    </div>
+    <div class="recv-cards" id="household-list">
+      <div class="empty-state" style="padding:20px">
+        <div class="empty-text" style="color:var(--text3);font-size:12px">No pending household reimbursements</div>
+      </div>
+    </div>
+
+    <!-- Income log -->
+    <div class="section-header" style="margin-top:8px">
+      <span class="section-title">Income</span>
+      <button class="section-link" onclick="openAddIncome()">+ Source</button>
+    </div>
+    <div id="income-list" style="padding:0 16px;display:flex;flex-direction:column;gap:8px">
+      <div class="empty-state" style="padding:20px">
+        <div class="empty-text" style="color:var(--text3);font-size:12px">Add your salary / stipend sources in settings</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ SETTINGS SCREEN ═══════════════ -->
+  <div class="screen" id="screen-settings">
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="topbar-title">Settings</div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;padding-left:4px">CONNECTION</div>
+      <div class="settings-card">
+        <div class="settings-row" onclick="openSupabaseSettings()">
+          <div class="settings-row-left">
+            <div class="settings-row-title">Supabase connection</div>
+            <div class="settings-row-sub" id="supabase-status-label">Not configured</div>
+          </div>
+          <div class="settings-row-right"><span id="supabase-status-dot">⚪</span> ›</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;padding-left:4px">INCOME SOURCES</div>
+      <div class="settings-card" id="income-sources-card">
+        <div class="settings-row" onclick="openAddIncome()">
+          <div class="settings-row-left">
+            <div class="settings-row-title">Add salary / stipend</div>
+            <div class="settings-row-sub">Set up recurring income to track</div>
+          </div>
+          <div class="settings-row-right">›</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;padding-left:4px">DATA</div>
+      <div class="settings-card">
+        <div class="settings-row" onclick="openMerchantMapper()">
+          <div class="settings-row-left">
+            <div class="settings-row-title">Merchant categories</div>
+            <div class="settings-row-sub">Fix auto-categorization mistakes</div>
+          </div>
+          <div class="settings-row-right">›</div>
+        </div>
+        <div class="settings-row" onclick="showToast('Sync triggered')">
+          <div class="settings-row-left">
+            <div class="settings-row-title">Refresh investment prices</div>
+            <div class="settings-row-sub">Fetch latest NAV and crypto prices</div>
+          </div>
+          <div class="settings-row-right">↻</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;color:var(--text3);font-size:11px;padding:20px">
+      Finance Dashboard · Built for Kahaan
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('home')" id="nav-home">
+      <span class="nav-icon">⌂</span>Home
+    </button>
+    <button class="nav-item" onclick="switchTab('expenses')" id="nav-expenses">
+      <span class="nav-icon">↕</span>Expenses
+    </button>
+    <button class="nav-item" onclick="switchTab('invest')" id="nav-invest">
+      <span class="nav-icon">◈</span>Invest
+    </button>
+    <button class="nav-item" onclick="switchTab('people')" id="nav-people">
+      <span class="nav-icon">◎</span>People
+    </button>
+    <button class="nav-item" onclick="switchTab('settings')" id="nav-settings">
+      <span class="nav-icon">⚙</span>Settings
+    </button>
+  </nav>
+
+  <!-- FAB -->
+  <button class="fab" onclick="openAddExpense()" title="Add manual expense">+</button>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ═══════ MODALS ═══════ -->
+
+  <!-- Supabase config -->
+  <div class="modal-overlay" id="modal-supabase">
+    <div class="modal">
+      <div class="modal-title">Supabase Connection <span class="modal-close" onclick="closeModal('modal-supabase')">✕</span></div>
+      <div class="form-group">
+        <label class="form-label">Project URL</label>
+        <input class="form-input" id="sb-url" type="url" placeholder="https://xxx.supabase.co" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Anon Key</label>
+        <input class="form-input" id="sb-key" type="password" placeholder="eyJ…" />
+      </div>
+      <button class="btn-primary" onclick="saveSupabaseConfig()">Save & Connect</button>
+    </div>
+  </div>
+
+  <!-- Add manual expense -->
+  <div class="modal-overlay" id="modal-expense">
+    <div class="modal">
+      <div class="modal-title">Add Expense <span class="modal-close" onclick="closeModal('modal-expense')">✕</span></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Amount (₹)</label>
+          <input class="form-input" id="exp-amount" type="number" placeholder="0" inputmode="decimal" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input class="form-input" id="exp-date" type="date" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Merchant / Description</label>
+        <input class="form-input" id="exp-merchant" type="text" placeholder="e.g. Swiggy, auto fare" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-input" id="exp-category">
+          <option>Food</option><option>Transport</option><option>Groceries</option>
+          <option>Shopping</option><option>Household</option><option>Health</option>
+          <option>Entertainment</option><option>Subscriptions</option><option>Transfer</option><option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">
+          <input type="checkbox" id="exp-reimbursable" style="margin-right:6px" />
+          Household expense — parents will reimburse
+        </label>
+      </div>
+      <button class="btn-primary" onclick="saveManualExpense()">Save Expense</button>
+    </div>
+  </div>
+
+  <!-- Add debt (friend owes me) -->
+  <div class="modal-overlay" id="modal-debt">
+    <div class="modal">
+      <div class="modal-title">Someone owes me <span class="modal-close" onclick="closeModal('modal-debt')">✕</span></div>
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input class="form-input" id="debt-name" type="text" placeholder="Friend's name" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Amount (₹)</label>
+          <input class="form-input" id="debt-amount" type="number" placeholder="0" inputmode="decimal" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input class="form-input" id="debt-date" type="date" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reason</label>
+        <input class="form-input" id="debt-reason" type="text" placeholder="e.g. Dinner at Agashiye" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Their UPI ID (optional — for auto-matching)</label>
+        <input class="form-input" id="debt-upi" type="text" placeholder="name@upi" />
+      </div>
+      <button class="btn-primary" onclick="saveDebt()">Save</button>
+    </div>
+  </div>
+
+  <!-- Add investment -->
+  <div class="modal-overlay" id="modal-investment">
+    <div class="modal">
+      <div class="modal-title">Add Investment <span class="modal-close" onclick="closeModal('modal-investment')">✕</span></div>
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input class="form-input" id="inv-name-input" type="text" placeholder="e.g. Mirae Asset Large Cap Fund" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select class="form-input" id="inv-type-input">
+            <option value="mutual_fund">Mutual Fund</option>
+            <option value="stock">Stock</option>
+            <option value="crypto">Crypto</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Source</label>
+          <select class="form-input" id="inv-source-input">
+            <option value="groww">Groww</option>
+            <option value="coindcx">CoinDCX</option>
+            <option value="manual">Manual</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Units / Qty</label>
+          <input class="form-input" id="inv-units" type="number" placeholder="0" inputmode="decimal" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Avg buy price (₹)</label>
+          <input class="form-input" id="inv-buy-price" type="number" placeholder="0" inputmode="decimal" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ticker / Symbol (optional)</label>
+        <input class="form-input" id="inv-ticker" type="text" placeholder="e.g. RELIANCE, BTC" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mode</label>
+        <select class="form-input" id="inv-mode-input">
+          <option value="active">Active — show P&L</option>
+          <option value="long_term_hold">Long-term hold — hide P&L</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="saveInvestment()">Save</button>
+    </div>
+  </div>
+
+  <!-- Add income source -->
+  <div class="modal-overlay" id="modal-income">
+    <div class="modal">
+      <div class="modal-title">Income Source <span class="modal-close" onclick="closeModal('modal-income')">✕</span></div>
+      <div class="form-group">
+        <label class="form-label">Name</label>
+        <input class="form-input" id="inc-name" type="text" placeholder="e.g. IME Internship Stipend" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Expected amount (₹)</label>
+          <input class="form-input" id="inc-amount" type="number" placeholder="0" inputmode="decimal" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Frequency</label>
+          <select class="form-input" id="inc-freq">
+            <option value="monthly">Monthly</option>
+            <option value="weekly">Weekly</option>
+            <option value="one_time">One-time</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">SMS keyword to auto-detect</label>
+        <input class="form-input" id="inc-keyword" type="text" placeholder="e.g. INSTITUTE OF MANUFACTURING" />
+      </div>
+      <button class="btn-primary" onclick="saveIncomeSource()">Save Source</button>
+    </div>
+  </div>
+
+  <!-- Add household reimbursement -->
+  <div class="modal-overlay" id="modal-household">
+    <div class="modal">
+      <div class="modal-title">Household Expense <span class="modal-close" onclick="closeModal('modal-household')">✕</span></div>
+      <div class="form-group">
+        <label class="form-label">Amount (₹)</label>
+        <input class="form-input" id="hh-amount" type="number" placeholder="0" inputmode="decimal" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input class="form-input" id="hh-desc" type="text" placeholder="e.g. DMart groceries, electricity bill" />
+      </div>
+      <button class="btn-primary" onclick="saveHouseholdExpense()">Mark as Pending Reimbursement</button>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIG & STATE
+// ═══════════════════════════════════════════════════════
+let SUPABASE_URL = localStorage.getItem('sb_url') || '';
+let SUPABASE_KEY = localStorage.getItem('sb_key') || '';
+
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const now = new Date();
+let currentMonth = now.getMonth();
+let currentYear  = now.getFullYear();
+
+const CAT_COLORS = {
+  'Food':          '#F97316',
+  'Transport':     '#3B82F6',
+  'Shopping':      '#A855F7',
+  'Groceries':     '#22C55E',
+  'Household':     '#EAB308',
+  'Health':        '#EC4899',
+  'Entertainment': '#06B6D4',
+  'Subscriptions': '#8B5CF6',
+  'Transfer':      '#6B7280',
+  'Income':        '#2DD4BF',
+  'Uncategorized': '#4D5562',
+};
+
+const CAT_EMOJI = {
+  'Food':'🍜','Transport':'🚗','Shopping':'🛍','Groceries':'🛒',
+  'Household':'🏠','Health':'💊','Entertainment':'🎬',
+  'Subscriptions':'📱','Transfer':'💸','Income':'💰','Uncategorized':'📌',
+};
+
+// ═══════════════════════════════════════════════════════
+// SUPABASE FETCH HELPER
+// ═══════════════════════════════════════════════════════
+async function sbFetch(path, options = {}) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return null;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': options.prefer || 'return=representation',
+      ...options.headers
+    },
+    ...options
+  });
+  if (!res.ok) { console.error('Supabase error', res.status, await res.text()); return null; }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function sbSelect(table, params = '') {
+  return sbFetch(`${table}?${params}`);
+}
+
+async function sbInsert(table, body) {
+  return sbFetch(table, { method: 'POST', body: JSON.stringify(body) });
+}
+
+async function sbUpdate(table, id, body) {
+  return sbFetch(`${table}?id=eq.${id}`, {
+    method: 'PATCH', body: JSON.stringify(body), prefer: 'return=minimal'
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`screen-${tab}`).classList.add('active');
+  document.getElementById(`nav-${tab}`).classList.add('active');
+
+  // Show/hide FAB (only on home + expenses)
+  document.querySelector('.fab').style.display =
+    (tab === 'home' || tab === 'expenses') ? 'flex' : 'none';
+
+  if (tab === 'home')     loadHome();
+  if (tab === 'expenses') loadExpenses();
+  if (tab === 'invest')   loadInvestments();
+  if (tab === 'people')   loadPeople();
+}
+
+// ═══════════════════════════════════════════════════════
+// GREETING
+// ═══════════════════════════════════════════════════════
+function setGreeting() {
+  const h = new Date().getHours();
+  const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greeting').textContent = g;
+}
+
+// ═══════════════════════════════════════════════════════
+// FORMAT HELPERS
+// ═══════════════════════════════════════════════════════
+function fmtAmount(n) {
+  if (n === null || n === undefined) return '—';
+  return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(n);
+}
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}, ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+}
+function daysAgo(iso) {
+  const diff = Math.floor((Date.now() - new Date(iso)) / 86400000);
+  if (diff === 0) return 'today';
+  if (diff === 1) return '1d ago';
+  return `${diff}d ago`;
+}
+
+// ═══════════════════════════════════════════════════════
+// TRANSACTION ITEM RENDERER
+// ═══════════════════════════════════════════════════════
+function renderTxn(t) {
+  const isDebit = t.type === 'debit';
+  const cat = t.category || 'Uncategorized';
+  const color = CAT_COLORS[cat] || CAT_COLORS['Uncategorized'];
+  const emoji = CAT_EMOJI[cat] || '📌';
+
+  return `
+    <div class="txn-item">
+      <div class="txn-dot" style="background:${color}22;color:${color}">${emoji}</div>
+      <div class="txn-info">
+        <div class="txn-merchant">${t.merchant_display || t.merchant_raw || 'Transfer'}</div>
+        <div class="txn-meta">${fmtDate(t.txn_date)}</div>
+        <span class="category-tag" style="background:${color}22;color:${color}">${cat}</span>
+      </div>
+      <div>
+        <div class="txn-amount" style="color:${isDebit ? 'var(--negative)' : 'var(--positive)'}">${isDebit ? '−' : '+'}₹${fmtAmount(t.amount)}</div>
+        ${t.balance_after ? `<div class="txn-balance">bal ₹${fmtAmount(t.balance_after)}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// HOME SCREEN
+// ═══════════════════════════════════════════════════════
+async function loadHome() {
+  updateMonthLabel();
+  if (!SUPABASE_URL) { openSupabaseSettings(); return; }
+
+  const start = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-01`;
+  const endDate = new Date(currentYear, currentMonth+1, 1);
+  const end = endDate.toISOString().split('T')[0];
+
+  // Fetch debits this month
+  const txns = await sbSelect('transactions',
+    `txn_date=gte.${start}&txn_date=lt.${end}&order=txn_date.desc&limit=200`);
+
+  if (!txns) return;
+
+  const debits  = txns.filter(t => t.type === 'debit');
+  const credits = txns.filter(t => t.type === 'credit');
+  const totalSpent  = debits.reduce((s, t) => s + Number(t.amount), 0);
+  const totalIncome = credits.reduce((s, t) => s + Number(t.amount), 0);
+
+  document.getElementById('home-total-spent').textContent = fmtAmount(totalSpent);
+  document.getElementById('home-income').textContent = '₹' + fmtAmount(totalIncome);
+
+  // Owed to me
+  const debts = await sbSelect('debts', 'status=neq.settled&select=amount,amount_settled');
+  const totalOwed = debts
+    ? debts.reduce((s, d) => s + Number(d.amount) - Number(d.amount_settled || 0), 0)
+    : 0;
+  document.getElementById('home-owed').textContent = '₹' + fmtAmount(totalOwed);
+
+  // Balance
+  const bal = totalIncome - totalSpent;
+  const balEl = document.getElementById('home-balance');
+  balEl.textContent = '₹' + fmtAmount(Math.abs(bal));
+  balEl.className = 'hero-sub-value ' + (bal >= 0 ? 'val-positive' : 'val-negative');
+
+  // Recent list (last 5 debits)
+  const recentList = document.getElementById('home-recent-list');
+  if (debits.length === 0) {
+    recentList.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><div class="empty-text">Waiting for your first IDFC SMS…</div></div>`;
+  } else {
+    recentList.innerHTML = debits.slice(0, 5).map(renderTxn).join('');
+  }
+
+  // Donut chart
+  renderDonut(debits);
+}
+
+function renderDonut(debits) {
+  const cats = {};
+  debits.forEach(t => {
+    const c = t.category || 'Uncategorized';
+    cats[c] = (cats[c] || 0) + Number(t.amount);
+  });
+
+  const entries = Object.entries(cats).sort((a,b) => b[1]-a[1]).slice(0, 6);
+  const total = entries.reduce((s, e) => s + e[1], 0);
+  if (total === 0) return;
+
+  const R = 40, CX = 55, CY = 55, SW = 16;
+  const circ = 2 * Math.PI * R;
+  let offset = 0;
+  let paths = '';
+
+  entries.forEach(([cat, amt]) => {
+    const frac = amt / total;
+    const dash = frac * circ;
+    const color = CAT_COLORS[cat] || '#4D5562';
+    paths += `<circle cx="${CX}" cy="${CY}" r="${R}" fill="none"
+      stroke="${color}" stroke-width="${SW}"
+      stroke-dasharray="${dash} ${circ - dash}"
+      stroke-dashoffset="${-offset}"
+      transform="rotate(-90 ${CX} ${CY})" />`;
+    offset += dash;
+  });
+
+  const centerAmt = `₹${fmtAmount(total)}`;
+  document.getElementById('donut-svg').innerHTML = `
+    <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="var(--border)" stroke-width="${SW}"/>
+    ${paths}
+    <text x="${CX}" y="${CY-4}" text-anchor="middle" fill="var(--text2)" font-size="8" font-family="DM Sans">spent</text>
+    <text x="${CX}" y="${CY+8}" text-anchor="middle" fill="var(--text)" font-size="10" font-weight="600" font-family="DM Mono">${centerAmt}</text>
+  `;
+
+  document.getElementById('donut-legend').innerHTML = entries.map(([cat, amt]) => `
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${CAT_COLORS[cat]||'#4D5562'}"></div>
+      <div class="legend-label">${cat}</div>
+      <div class="legend-amount">₹${fmtAmount(amt)}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPENSES SCREEN
+// ═══════════════════════════════════════════════════════
+async function loadExpenses() {
+  if (!SUPABASE_URL) return;
+  const start = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-01`;
+  const endDate = new Date(currentYear, currentMonth+1, 1);
+  const end = endDate.toISOString().split('T')[0];
+
+  const txns = await sbSelect('transactions',
+    `txn_date=gte.${start}&txn_date=lt.${end}&type=eq.debit&order=txn_date.desc`);
+
+  const list = document.getElementById('expenses-list');
+  if (!txns || txns.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">🧾</div><div class="empty-text">No transactions yet this month</div></div>`;
+    return;
+  }
+
+  // Group by date
+  const groups = {};
+  txns.forEach(t => {
+    const day = t.txn_date.split('T')[0];
+    if (!groups[day]) groups[day] = [];
+    groups[day].push(t);
+  });
+
+  let html = '';
+  Object.entries(groups).sort((a,b) => b[0].localeCompare(a[0])).forEach(([day, items]) => {
+    const d = new Date(day);
+    const dayTotal = items.reduce((s,t) => s + Number(t.amount), 0);
+    html += `<div style="display:flex;justify-content:space-between;padding:12px 4px 6px;font-size:12px;color:var(--text3)">
+      <span>${d.getDate()} ${MONTHS[d.getMonth()]}</span>
+      <span style="font-family:'DM Mono',monospace">₹${fmtAmount(dayTotal)}</span>
+    </div>`;
+    html += `<div style="display:flex;flex-direction:column;gap:2px">${items.map(renderTxn).join('')}</div>`;
+  });
+  list.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════
+// INVESTMENTS SCREEN
+// ═══════════════════════════════════════════════════════
+async function loadInvestments() {
+  if (!SUPABASE_URL) return;
+  const invs = await sbSelect('investments', 'order=created_at.desc');
+  if (!invs) return;
+
+  const active = invs.filter(i => i.mode === 'active');
+  const longTerm = invs.filter(i => i.mode === 'long_term_hold');
+
+  // Active summary
+  const activeInvested = active.reduce((s,i) => s + Number(i.invested_amount), 0);
+  const activeValue    = active.reduce((s,i) => s + Number(i.current_value || i.invested_amount), 0);
+  const activeReturn   = activeValue - activeInvested;
+  const activePct      = activeInvested > 0 ? ((activeReturn / activeInvested) * 100).toFixed(1) : 0;
+  const totalInvested  = invs.reduce((s,i) => s + Number(i.invested_amount), 0);
+
+  document.getElementById('inv-active-value').textContent = fmtAmount(activeValue);
+  document.getElementById('inv-active-invested').textContent = '₹' + fmtAmount(activeInvested);
+  document.getElementById('inv-total-invested').textContent = '₹' + fmtAmount(totalInvested);
+
+  const retEl = document.getElementById('inv-active-returns');
+  retEl.textContent = `${activeReturn >= 0 ? '+' : ''}₹${fmtAmount(Math.abs(activeReturn))} (${activePct}%)`;
+  retEl.className = 'hero-sub-value ' + (activeReturn >= 0 ? 'val-positive' : 'val-negative');
+
+  // Active list
+  const activeList = document.getElementById('active-inv-list');
+  if (active.length === 0) {
+    activeList.innerHTML = `<div class="empty-state"><div class="empty-icon">📈</div><div class="empty-text">Add your Groww and CoinDCX holdings</div></div>`;
+  } else {
+    activeList.innerHTML = active.map(inv => renderInvCard(inv, true)).join('');
+  }
+
+  // Long-term block
+  const ltBlock = document.getElementById('long-term-block');
+  if (longTerm.length > 0) {
+    ltBlock.style.display = 'block';
+    const ltInvested = longTerm.reduce((s,i) => s + Number(i.invested_amount), 0);
+    document.getElementById('lt-summary').textContent = `₹${fmtAmount(ltInvested)} invested`;
+    document.getElementById('lt-list').innerHTML = longTerm.map(inv => renderInvCard(inv, false)).join('');
+  } else {
+    ltBlock.style.display = 'none';
+  }
+}
+
+function renderInvCard(inv, showPnl) {
+  const badgeClass = inv.type === 'mutual_fund' ? 'badge-mf' : inv.type === 'stock' ? 'badge-stock' : 'badge-crypto';
+  const typeLabel  = inv.type === 'mutual_fund' ? 'MF' : inv.type === 'stock' ? 'Stock' : 'Crypto';
+  const current = Number(inv.current_value || inv.invested_amount);
+  const invested = Number(inv.invested_amount);
+  const pnl = current - invested;
+  const pct = invested > 0 ? ((pnl / invested) * 100).toFixed(1) : 0;
+
+  return `
+    <div class="inv-card">
+      <div class="inv-card-header">
+        <div class="inv-name">${inv.name}</div>
+        <span class="inv-type-badge ${badgeClass}">${typeLabel} · ${inv.source}</span>
+      </div>
+      <div class="inv-numbers">
+        <div class="inv-num">
+          <div class="inv-num-label">Invested</div>
+          <div class="inv-num-value">₹${fmtAmount(invested)}</div>
+        </div>
+        ${showPnl ? `
+        <div class="inv-num">
+          <div class="inv-num-label">Current</div>
+          <div class="inv-num-value">₹${fmtAmount(current)}</div>
+          <div class="inv-num-change" style="color:${pnl >= 0 ? 'var(--positive)' : 'var(--negative)'}">
+            ${pnl >= 0 ? '+' : ''}${pct}%
+          </div>
+        </div>` : ''}
+        <div class="inv-num">
+          <div class="inv-num-label">Units</div>
+          <div class="inv-num-value" style="font-size:12px">${Number(inv.units).toFixed(3)}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleLongTerm() {
+  const body = document.getElementById('lt-body');
+  const chev = document.getElementById('lt-chevron');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════════════
+// PEOPLE SCREEN
+// ═══════════════════════════════════════════════════════
+async function loadPeople() {
+  if (!SUPABASE_URL) return;
+
+  // Debts
+  const debts = await sbSelect('debts',
+    'status=neq.settled&select=id,amount,amount_settled,reason,debt_date,status,person_id,people(name)&order=debt_date.desc');
+
+  const recvList = document.getElementById('recv-list');
+  if (!debts || debts.length === 0) {
+    recvList.innerHTML = `<div class="empty-state"><div class="empty-icon">🤝</div><div class="empty-text">No one owes you anything right now</div></div>`;
+    document.getElementById('recv-total-bar').style.display = 'none';
+  } else {
+    const total = debts.reduce((s,d) => s + Number(d.amount) - Number(d.amount_settled||0), 0);
+    document.getElementById('recv-total').textContent = '₹' + fmtAmount(total);
+    document.getElementById('recv-total-bar').style.display = 'flex';
+
+    recvList.innerHTML = debts.map(d => `
+      <div class="recv-card">
+        <div class="recv-avatar">${(d.people?.name || '?')[0].toUpperCase()}</div>
+        <div class="recv-info">
+          <div class="recv-name">${d.people?.name || 'Unknown'}</div>
+          <div class="recv-reason">${d.reason || 'No reason given'}</div>
+        </div>
+        <div>
+          <div class="recv-amount">₹${fmtAmount(Number(d.amount) - Number(d.amount_settled||0))}</div>
+          <div class="recv-age">${daysAgo(d.debt_date)}</div>
+          <button onclick="settleDebt('${d.id}')" style="font-size:10px;color:var(--positive);margin-top:4px;display:block">✓ Settle</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // Household
+  const hhList = await sbSelect('household_reimbursements',
+    'status=eq.pending&order=created_at.desc');
+  const hhEl = document.getElementById('household-list');
+  if (!hhList || hhList.length === 0) {
+    hhEl.innerHTML = `<div class="empty-state" style="padding:20px"><div class="empty-text" style="color:var(--text3);font-size:12px">No pending household reimbursements</div></div>`;
+  } else {
+    hhEl.innerHTML = hhList.map(h => `
+      <div class="recv-card">
+        <div class="recv-avatar" style="background:rgba(234,179,8,0.15);color:var(--warn)">🏠</div>
+        <div class="recv-info">
+          <div class="recv-name">${h.description || 'Household expense'}</div>
+          <div class="recv-reason">Parents · ${daysAgo(h.created_at)}</div>
+        </div>
+        <div>
+          <div class="recv-amount" style="color:var(--warn)">₹${fmtAmount(h.amount)}</div>
+          <button onclick="settleHousehold('${h.id}')" style="font-size:10px;color:var(--positive);margin-top:4px;display:block">✓ Got paid</button>
+        </div>
+      </div>`).join('');
+  }
+
+  // Income
+  const income = await sbSelect('income',
+    'select=id,amount,received_date,income_sources(name)&order=received_date.desc&limit=10');
+  const incEl = document.getElementById('income-list');
+  if (!income || income.length === 0) {
+    incEl.innerHTML = `<div class="empty-state" style="padding:20px"><div class="empty-text" style="color:var(--text3);font-size:12px">No income recorded yet</div></div>`;
+  } else {
+    incEl.innerHTML = income.map(i => `
+      <div class="income-row">
+        <div class="income-left">
+          <div class="income-name">${i.income_sources?.name || 'Income'}</div>
+          <div class="income-date">${fmtDate(i.received_date)}</div>
+        </div>
+        <div class="income-right">
+          <div class="income-amount">+₹${fmtAmount(i.amount)}</div>
+          <div class="income-status status-received">● Received</div>
+        </div>
+      </div>`).join('');
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// SETTLE ACTIONS
+// ═══════════════════════════════════════════════════════
+async function settleDebt(id) {
+  await sbUpdate('debts', id, { status: 'settled', settled_date: new Date().toISOString() });
+  showToast('Marked as settled ✓');
+  loadPeople();
+}
+
+async function settleHousehold(id) {
+  await sbUpdate('household_reimbursements', id, { status: 'settled', settled_date: new Date().toISOString() });
+  showToast('Got paid ✓');
+  loadPeople();
+}
+
+// ═══════════════════════════════════════════════════════
+// SAVE ACTIONS
+// ═══════════════════════════════════════════════════════
+async function saveManualExpense() {
+  const amount   = parseFloat(document.getElementById('exp-amount').value);
+  const merchant = document.getElementById('exp-merchant').value.trim();
+  const category = document.getElementById('exp-category').value;
+  const date     = document.getElementById('exp-date').value;
+  const reimb    = document.getElementById('exp-reimbursable').checked;
+  if (!amount || !merchant || !date) { showToast('Fill in all fields'); return; }
+
+  const result = await sbInsert('transactions', {
+    type: 'debit', amount, merchant_raw: merchant.toUpperCase(),
+    merchant_display: merchant, category,
+    txn_date: new Date(date).toISOString(), is_reimbursable: reimb,
+    sms_raw: 'manual_entry'
+  });
+
+  if (reimb && result && result[0]) {
+    await sbInsert('household_reimbursements', {
+      txn_id: result[0].id, amount, description: merchant, status: 'pending'
+    });
+  }
+
+  closeModal('modal-expense');
+  showToast('Expense saved ✓');
+  loadHome();
+}
+
+async function saveDebt() {
+  const name   = document.getElementById('debt-name').value.trim();
+  const amount = parseFloat(document.getElementById('debt-amount').value);
+  const reason = document.getElementById('debt-reason').value.trim();
+  const date   = document.getElementById('debt-date').value;
+  const upi    = document.getElementById('debt-upi').value.trim();
+  if (!name || !amount) { showToast('Name and amount required'); return; }
+
+  // Upsert person
+  let personId;
+  const existing = await sbSelect('people', `name=ilike.${encodeURIComponent(name)}&limit=1`);
+  if (existing && existing.length > 0) {
+    personId = existing[0].id;
+    if (upi) await sbUpdate('people', personId, { upi_id: upi });
+  } else {
+    const p = await sbInsert('people', { name, upi_id: upi || null });
+    personId = p?.[0]?.id;
+  }
+
+  await sbInsert('debts', {
+    person_id: personId, amount, reason,
+    debt_date: date ? new Date(date).toISOString() : new Date().toISOString(),
+    status: 'pending'
+  });
+
+  closeModal('modal-debt');
+  showToast(`${name} owes you ₹${fmtAmount(amount)} ✓`);
+  loadPeople();
+}
+
+async function saveInvestment() {
+  const name      = document.getElementById('inv-name-input').value.trim();
+  const type      = document.getElementById('inv-type-input').value;
+  const source    = document.getElementById('inv-source-input').value;
+  const units     = parseFloat(document.getElementById('inv-units').value);
+  const buyPrice  = parseFloat(document.getElementById('inv-buy-price').value);
+  const ticker    = document.getElementById('inv-ticker').value.trim();
+  const mode      = document.getElementById('inv-mode-input').value;
+  if (!name || !units || !buyPrice) { showToast('Fill required fields'); return; }
+
+  const invested = units * buyPrice;
+  await sbInsert('investments', {
+    name, type, source, units, avg_buy_price: buyPrice,
+    invested_amount: invested, current_value: invested,
+    ticker: ticker || null, mode
+  });
+
+  closeModal('modal-investment');
+  showToast('Investment saved ✓');
+  loadInvestments();
+}
+
+async function saveIncomeSource() {
+  const name    = document.getElementById('inc-name').value.trim();
+  const amount  = parseFloat(document.getElementById('inc-amount').value);
+  const freq    = document.getElementById('inc-freq').value;
+  const keyword = document.getElementById('inc-keyword').value.trim();
+  if (!name) { showToast('Name required'); return; }
+
+  await sbInsert('income_sources', {
+    name, expected_amount: amount || null,
+    frequency: freq, credit_keyword: keyword || null, is_active: true
+  });
+
+  closeModal('modal-income');
+  showToast('Income source saved ✓');
+}
+
+async function saveHouseholdExpense() {
+  const amount = parseFloat(document.getElementById('hh-amount').value);
+  const desc   = document.getElementById('hh-desc').value.trim();
+  if (!amount) { showToast('Enter an amount'); return; }
+
+  await sbInsert('household_reimbursements', { amount, description: desc, status: 'pending' });
+  closeModal('modal-household');
+  showToast('Added as pending reimbursement ✓');
+  loadPeople();
+}
+
+// ═══════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════
+function openSupabaseSettings() {
+  document.getElementById('sb-url').value = SUPABASE_URL;
+  document.getElementById('sb-key').value = SUPABASE_KEY;
+  openModal('modal-supabase');
+}
+
+async function saveSupabaseConfig() {
+  const url = document.getElementById('sb-url').value.trim();
+  const key = document.getElementById('sb-key').value.trim();
+  if (!url || !key) { showToast('Both fields required'); return; }
+  SUPABASE_URL = url; SUPABASE_KEY = key;
+  localStorage.setItem('sb_url', url);
+  localStorage.setItem('sb_key', key);
+  closeModal('modal-supabase');
+  updateSupabaseStatus();
+  showToast('Connected ✓');
+  loadHome();
+}
+
+function updateSupabaseStatus() {
+  const connected = !!(SUPABASE_URL && SUPABASE_KEY);
+  document.getElementById('supabase-status-label').textContent =
+    connected ? SUPABASE_URL.replace('https://','').split('.')[0] + '.supabase.co' : 'Not configured';
+  document.getElementById('supabase-status-dot').textContent = connected ? '🟢' : '⚪';
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL HELPERS
+// ═══════════════════════════════════════════════════════
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function openAddExpense()    { document.getElementById('exp-date').value = new Date().toISOString().split('T')[0]; openModal('modal-expense'); }
+function openAddDebt()       { document.getElementById('debt-date').value = new Date().toISOString().split('T')[0]; openModal('modal-debt'); }
+function openAddInvestment() { openModal('modal-investment'); }
+function openAddIncome()     { openModal('modal-income'); }
+function openAddHousehold()  { openModal('modal-household'); }
+function openMerchantMapper(){ showToast('Edit merchant_mappings in your Supabase Table Editor'); }
+
+// Close modal on overlay tap
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════════════════════
+// MONTH NAV
+// ═══════════════════════════════════════════════════════
+function updateMonthLabel() {
+  const label = `${MONTHS[currentMonth]} ${currentYear}`;
+  document.getElementById('current-month-label').textContent = label;
+  document.getElementById('exp-month-label').textContent = label;
+}
+
+document.getElementById('month-selector').addEventListener('click', () => {
+  currentMonth--;
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  updateMonthLabel();
+  loadHome();
+});
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+setGreeting();
+updateMonthLabel();
+updateSupabaseStatus();
+
+// Pre-fill Supabase if already stored
+if (SUPABASE_URL && SUPABASE_KEY) {
+  loadHome();
+} else {
+  // First launch — prompt for connection
+  setTimeout(() => openSupabaseSettings(), 400);
+}
+</script>
+</body>
+</html>
+```
