@@ -469,15 +469,21 @@ input,select,textarea { font:inherit; }
 
     <div class="sec">
       <h2>Household — parents reimburse</h2>
-      <button data-act="add-household">+ Add</button>
+      <button data-act="add-household">+ Add expense</button>
     </div>
     <div class="rows" id="household-rows"></div>
 
     <div class="sec">
-      <h2>Income</h2>
-      <button data-act="add-income">+ Source</button>
+      <h2>Money received</h2>
+      <button data-act="add-received">+ Record</button>
     </div>
     <div class="rows" id="income-rows"></div>
+
+    <div class="sec" style="margin-top:4px">
+      <h2>Income sources</h2>
+      <button data-act="add-income">+ Source</button>
+    </div>
+    <div class="rows" id="income-source-rows"></div>
   </section>
 
   <!-- ══ SETTINGS ══════════════════════════════════════════ -->
@@ -507,7 +513,8 @@ input,select,textarea { font:inherit; }
     <div class="set-group">
       <p>Add</p>
       <div class="set-card">
-        <button class="set-row" data-act="add-income"><span class="set-t">Income source</span><span class="set-r">›</span></button>
+        <button class="set-row" data-act="add-received"><span class="set-t">Record money received</span><span class="set-r">›</span></button>
+        <button class="set-row" data-act="add-income"><span class="set-t">Add income source</span><span class="set-r">›</span></button>
         <button class="set-row" data-act="add-household"><span class="set-t">Household expense</span><span class="set-r">›</span></button>
         <button class="set-row" data-act="add-investment"><span class="set-t">Holding</span><span class="set-r">›</span></button>
       </div>
@@ -583,6 +590,22 @@ input,select,textarea { font:inherit; }
     <option value="active">Active — show P&amp;L</option><option value="long_term_hold">Long-term — hide P&amp;L</option>
   </select></div>
   <button class="btn" data-act="save-investment">Save</button>
+</div></div>
+
+<div class="overlay" id="m-received"><div class="sheet">
+  <div class="sheet-title"><span>Record money received</span><button data-act="close" data-modal="m-received" aria-label="Close">✕</button></div>
+  <p class="hint">Use this for pocket money, split refunds, freelance payments, cashbacks — anything credited to your account that you want to track.</p>
+  <div class="pair">
+    <div class="field"><label for="rcv-amount">Amount (₹)</label><input id="rcv-amount" type="number" step="0.01" inputmode="decimal" placeholder="0" /></div>
+    <div class="field"><label for="rcv-date">Date</label><input id="rcv-date" type="date" /></div>
+  </div>
+  <div class="field"><label for="rcv-from">From / description</label><input id="rcv-from" type="text" placeholder="Aadit, Swiggy refund, pocket money…" /></div>
+  <div class="field"><label for="rcv-category">Category</label><select id="rcv-category">
+    <option value="Income">Income / salary</option>
+    <option value="Transfer">Transfer / pocket money</option>
+    <option value="Other">Other</option>
+  </select></div>
+  <button class="btn" data-act="save-received">Save</button>
 </div></div>
 
 <div class="overlay" id="m-income"><div class="sheet">
@@ -919,11 +942,14 @@ async function loadHome() {
   await renderHeroDelta(spent, invested);
   renderRibbon(txns, debits);
 
-  $('recent-rows').innerHTML = debits.length
-    ? debits.slice(0, 6).map(t => txnRow(t)).join('')
+  // Belt-and-suspenders: filter client-side too in case any credit row
+  // slipped through the DB query (e.g. rows inserted without an explicit type)
+  const recentDebits = debits.filter(t => t.type === 'debit' && t.category !== 'Investment');
+  $('recent-rows').innerHTML = recentDebits.length
+    ? recentDebits.slice(0, 6).map(t => txnRow(t)).join('')
     : `<div class="empty"><div class="e">₹</div><div class="t">Nothing spent this month yet.</div></div>`;
 
-  renderBreakdown(debits, spent);
+  renderBreakdown(recentDebits, spent);
   if (GM_KEY) loadInsight(false);
   else $('ai-card').style.display = 'none';
 }
@@ -1103,7 +1129,8 @@ async function loadExpenses() {
 
 function renderExpenseRows() {
   const q = ($('search').value || '').trim().toLowerCase();
-  let list = cache.expenses;
+  // Ensure only debits appear even if a stale cache has credits mixed in
+  let list = cache.expenses.filter(t => t.type === 'debit');
   if (catFilter !== 'all') list = list.filter(t => (t.category || 'Other') === catFilter);
   if (q) list = list.filter(t =>
     `${t.merchant_display || ''} ${t.merchant_raw || ''} ${t.note || ''} ${t.category || ''}`
@@ -1239,10 +1266,14 @@ Reply with only a JSON array: [{"name":"<exact name as given>","price_per_unit":
    ═══════════════════════════════════════════════════════════════ */
 async function loadPeople() {
   if (!SB_URL) return;
-  const [debts, household, income] = await Promise.all([
+  // Fetch recent credit transactions (money received) from the current + last month
+  const now = new Date();
+  const twoMonthsAgo = ymd(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+  const [debts, household, recentCredits, incomeSources] = await Promise.all([
     sbGet('debts', 'status=neq.settled&select=id,amount,amount_settled,reason,debt_date,people(name)&order=debt_date.desc'),
     sbGet('household_reimbursements', 'status=eq.pending&order=created_at.desc'),
-    sbGet('income', 'select=id,amount,received_date,income_sources(name)&order=received_date.desc&limit=10')
+    sbGet('transactions', `type=eq.credit&txn_date=gte.${twoMonthsAgo}&order=txn_date.desc&limit=20`),
+    sbGet('income_sources', 'is_active=eq.true&order=name.asc')
   ]);
 
   const dEl = $('debt-rows');
@@ -1293,17 +1324,29 @@ async function loadPeople() {
       </div>`).join('')
     : `<div class="empty"><div class="t">Nothing pending.</div></div>`;
 
-  $('income-rows').innerHTML = (income && income.length)
-    ? income.map(i => `
+  $('income-rows').innerHTML = (recentCredits && recentCredits.length)
+    ? recentCredits.map(c => `
       <div class="row">
-        <div class="chip-dot" style="background:var(--credit-dim);color:var(--credit)">₹</div>
+        <div class="chip-dot" style="background:var(--credit-dim);color:var(--credit)">+</div>
         <div class="row-mid">
-          <div class="row-name">${esc(i.income_sources?.name || 'Income')}</div>
-          <div class="row-sub">${esc(fmtDateTime(i.received_date))}</div>
+          <div class="row-name">${esc(c.merchant_display || c.merchant_raw || 'Money received')}</div>
+          <div class="row-sub">${esc(fmtDateTime(c.txn_date))} · ${esc(c.category || 'Income')}</div>
         </div>
-        <div class="row-right"><div class="row-amt num" style="color:var(--credit)">+₹${inr(i.amount)}</div></div>
+        <div class="row-right"><div class="row-amt num" style="color:var(--credit)">+₹${inr(c.amount)}</div></div>
       </div>`).join('')
-    : `<div class="empty"><div class="t">No income recorded. Add a source to track it.</div></div>`;
+    : `<div class="empty"><div class="t">No money received in the last two months.<br>Tap + Record above to add one.</div></div>`;
+
+  $('income-source-rows').innerHTML = (incomeSources && incomeSources.length)
+    ? incomeSources.map(s => `
+      <div class="row">
+        <div class="chip-dot" style="background:var(--accent-dim);color:var(--accent)">↻</div>
+        <div class="row-mid">
+          <div class="row-name">${esc(s.name)}</div>
+          <div class="row-sub">${esc(s.frequency || '')}${s.expected_amount ? ' · ₹' + inr(s.expected_amount) + ' expected' : ''}</div>
+        </div>
+        <div class="row-right" style="font-size:11px;color:var(--text-3)">${esc(s.credit_keyword || '')}</div>
+      </div>`).join('')
+    : `<div class="empty"><div class="t">No income sources set up yet.</div></div>`;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1446,6 +1489,26 @@ async function saveInvestment() {
   ['inv-name','inv-units','inv-price','inv-ticker'].forEach(k => $(k).value = '');
   toast('Holding saved');
   loadPortfolio();
+}
+
+async function saveReceived() {
+  const amount = parseFloat($('rcv-amount').value);
+  const from = $('rcv-from').value.trim();
+  const date = $('rcv-date').value;
+  if (!(amount > 0)) { toast('Enter an amount above zero', true); return; }
+  if (!from) { toast('Add a description or who it\'s from', true); return; }
+  if (!date) { toast('Pick a date', true); return; }
+  if (await sbInsert('transactions', {
+    type: 'credit', amount,
+    merchant_raw: from, merchant_display: from,
+    category: $('rcv-category').value,
+    txn_date: new Date(`${date}T12:00:00`).toISOString(),
+    sms_raw: 'manual_entry'
+  }) === null) return;
+  closeModal('m-received');
+  ['rcv-amount','rcv-from'].forEach(k => $(k).value = '');
+  toast(`+₹${inr(amount)} recorded`);
+  loadHome(); loadPeople();
 }
 
 async function saveIncomeSource() {
@@ -1594,6 +1657,8 @@ const ACTIONS = {
   'settle-household': el => settleHousehold(el.dataset.id),
   'add-household': () => openModal('m-household'),
   'save-household': () => saveHousehold(),
+  'add-received': () => { $('rcv-date').value = ymd(new Date()); openModal('m-received'); },
+  'save-received': () => saveReceived(),
   'add-income': () => openModal('m-income'),
   'save-income': () => saveIncomeSource(),
   'add-investment': () => openModal('m-investment'),
