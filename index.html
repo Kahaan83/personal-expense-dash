@@ -942,13 +942,17 @@ async function loadHome() {
   await renderHeroDelta(spent, invested);
   renderRibbon(txns, debits);
 
-  // Belt-and-suspenders: filter client-side too in case any credit row
-  // slipped through the DB query (e.g. rows inserted without an explicit type)
-  const recentDebits = debits.filter(t => t.type === 'debit' && t.category !== 'Investment');
-  $('recent-rows').innerHTML = recentDebits.length
-    ? recentDebits.slice(0, 6).map(t => txnRow(t)).join('')
-    : `<div class="empty"><div class="e">₹</div><div class="t">Nothing spent this month yet.</div></div>`;
+  // Recent shows every transaction type — debits, credits, investment moves —
+  // in one chronological feed. Belt-and-suspenders re-sort here in case the
+  // API ever returns rows out of order.
+  const recentAll = [...txns].sort((a, b) => String(b.txn_date).localeCompare(String(a.txn_date)));
+  $('recent-rows').innerHTML = recentAll.length
+    ? recentAll.slice(0, 6).map(t => txnRow(t)).join('')
+    : `<div class="empty"><div class="e">₹</div><div class="t">Nothing here yet for this month.</div></div>`;
 
+  // "Where it went" stays spending-only (debits, excl. investment) — that's
+  // a breakdown of what you spent on, not a feed of every txn.
+  const recentDebits = debits.filter(t => t.type === 'debit' && t.category !== 'Investment');
   renderBreakdown(recentDebits, spent);
   if (GM_KEY) loadInsight(false);
   else $('ai-card').style.display = 'none';
