@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,8 +21,6 @@
 <style>
 /* ══════════════════════════════════════════════════════════════
    MATERIAL 3 EXPRESSIVE DESIGN TOKENS
-   Dynamic tonal palettes, expressive squircle radii, 
-   pill-indicator navigation bar, and high-legibility mono numerals.
    ══════════════════════════════════════════════════════════════ */
 :root {
   --md-sys-color-primary:                  #D0BCFF;
@@ -64,7 +61,6 @@
   --md-sys-color-warn-container:           #524000;
   --md-sys-color-on-warn-container:        #FFE088;
 
-  /* Material 3 Expressive Radii */
   --r-xs: 8px;
   --r-sm: 12px;
   --r-md: 16px;
@@ -72,7 +68,6 @@
   --r-xl: 28px;
   --r-full: 9999px;
 
-  /* Category accent markers */
   --cat-Food:#FF8A65; --cat-Transport:#4DD0E1; --cat-Shopping:#BA68C8;
   --cat-Groceries:#81C784; --cat-Household:#FFD54F; --cat-Health:#F06292;
   --cat-Entertainment:#4FC3F7; --cat-Subscriptions:#9575CD; --cat-Transfer:#90A4AE;
@@ -131,7 +126,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .screen.active { display: block; }
 
-/* ── M3 Top App Bar ─────────────────────────────────────────── */
+/* ── Top App Bar ─────────────────────────────────────────── */
 .topbar {
   padding: calc(18px + var(--safe-top)) 20px 12px;
   display: flex;
@@ -157,7 +152,7 @@ input, select, textarea { font: inherit; color: inherit; }
   gap: 6px;
 }
 
-/* ── M3 Month Segmented Button ────────────────────────────── */
+/* ── Month Segmented Button ────────────────────────────── */
 .monthpick {
   display: flex;
   align-items: center;
@@ -168,11 +163,9 @@ input, select, textarea { font: inherit; color: inherit; }
   padding: 4px 6px;
 }
 .monthpick button.nav-arr {
-  width: 30px;
-  height: 30px;
+  width: 30px; height: 30px;
   border-radius: var(--r-full);
-  display: grid;
-  place-items: center;
+  display: grid; place-items: center;
   color: var(--md-sys-color-on-surface-variant);
   transition: background 0.2s var(--ease-m3);
 }
@@ -182,17 +175,15 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .monthpick button.nav-arr:disabled { opacity: 0.25; cursor: default; }
 .monthpick .label {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 13px; font-weight: 600;
   color: var(--md-sys-color-on-surface);
-  min-width: 74px;
-  text-align: center;
+  min-width: 74px; text-align: center;
   padding: 4px 6px;
   border-radius: var(--r-full);
 }
 .monthpick .label:hover { background: var(--md-sys-color-surface-container-highest); }
 
-/* ── M3 Expressive Hero Card ──────────────────────────────── */
+/* ── Hero Card ──────────────────────────────── */
 .ribbon {
   margin: 8px 18px 16px;
   background: linear-gradient(145deg, var(--md-sys-color-surface-container-high), var(--md-sys-color-surface-container));
@@ -214,12 +205,35 @@ input, select, textarea { font: inherit; color: inherit; }
 .ribbon-amount .rs { font-size: 26px; color: var(--md-sys-color-primary); margin-right: 2px; }
 .ribbon-delta { font-size: 13px; font-weight: 500; margin-top: 6px; color: var(--md-sys-color-on-surface-variant); }
 .ribbon-chart { display: block; width: 100%; height: 96px; margin-top: 2px; }
-.ribbon-chart path.line { fill: none; stroke: var(--md-sys-color-primary); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 2px 6px rgba(208,188,255,0.4)); }
+/* Cumulative spend line styling (replaces balance line) */
+.ribbon-chart path.cum-line {
+  fill: none;
+  stroke: var(--md-sys-color-primary);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 6px rgba(208,188,255,0.4));
+}
+/* Fill area under cumulative spend */
+.ribbon-chart path.cum-fill {
+  fill: url(#spendGradient);
+  opacity: 0.35;
+  stroke: none;
+}
 .ribbon-chart .bar { fill: var(--md-sys-color-secondary-container); opacity: 0.75; }
-.ribbon-axis { display: flex; justify-content: space-between; padding: 2px 22px 14px; font-size: 11px; font-weight: 500; color: var(--md-sys-color-outline); }
+.ribbon-axis {
+  display: flex; justify-content: space-between;
+  padding: 2px 22px 14px;
+  font-size: 11px; font-weight: 500;
+  color: var(--md-sys-color-outline);
+}
 
 @media (prefers-reduced-motion: no-preference) {
-  .ribbon-chart path.line { stroke-dasharray: 2000; stroke-dashoffset: 2000; animation: draw 1.2s var(--ease-m3) forwards; }
+  .ribbon-chart path.cum-line {
+    stroke-dasharray: 2000;
+    stroke-dashoffset: 2000;
+    animation: draw 1.2s var(--ease-m3) forwards;
+  }
   @keyframes draw { to { stroke-dashoffset: 0; } }
 }
 
@@ -242,7 +256,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .sec button { font-size: 13px; font-weight: 600; color: var(--md-sys-color-primary); display: flex; align-items: center; gap: 4px; }
 .sec button:hover { text-decoration: underline; }
 
-/* ── M3 AI Sparkle Card ───────────────────────────────────── */
+/* ── AI Sparkle Card ───────────────────────────────────── */
 .ai {
   margin: 6px 18px 14px;
   padding: 16px 18px;
@@ -255,29 +269,30 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .ai::after {
   content: '';
-  position: absolute;
-  right: -20px;
-  bottom: -20px;
-  width: 90px;
-  height: 90px;
+  position: absolute; right: -20px; bottom: -20px;
+  width: 90px; height: 90px;
   background: radial-gradient(circle, rgba(208,188,255,0.2) 0%, transparent 70%);
   pointer-events: none;
 }
 .ai-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .ai-head span { font-size: 13px; font-weight: 700; color: var(--md-sys-color-primary); display: flex; align-items: center; gap: 6px; }
-.ai-head button { font-size: 12px; font-weight: 600; color: var(--md-sys-color-on-surface-variant); background: var(--md-sys-color-surface-container); padding: 4px 10px; border-radius: var(--r-full); }
+.ai-head button {
+  font-size: 12px; font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container);
+  padding: 4px 10px;
+  border-radius: var(--r-full);
+}
 .ai-head button:hover { background: var(--md-sys-color-surface-container-highest); }
 .ai-body { font-size: 13.5px; line-height: 1.55; color: var(--md-sys-color-on-surface); }
 .spin { display: inline-block; animation: sp 1s linear infinite; }
 @keyframes sp { to { transform: rotate(360deg); } }
 
-/* ── M3 Expressive Quick Add ──────────────────────────────── */
+/* ── Quick Add ──────────────────────────────────────── */
 .quick { margin: 12px 18px 4px; display: flex; gap: 8px; }
 .quick-input-wrap {
-  flex: 1;
-  position: relative;
-  display: flex;
-  align-items: center;
+  flex: 1; position: relative;
+  display: flex; align-items: center;
   background: var(--md-sys-color-surface-container-high);
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--r-full);
@@ -290,51 +305,36 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .quick-input-wrap .ai-icon { color: var(--md-sys-color-primary); font-size: 20px; margin-right: 8px; }
 .quick-input-wrap input {
-  flex: 1;
-  background: none;
-  border: none;
-  outline: none;
+  flex: 1; background: none; border: none; outline: none;
   padding: 13px 0;
-  color: var(--md-sys-color-on-surface);
-  font-size: 14.5px;
+  color: var(--md-sys-color-on-surface); font-size: 14.5px;
 }
 .quick-input-wrap input::placeholder { color: var(--md-sys-color-outline); }
 .quick-btn {
-  padding: 0 20px;
-  border-radius: var(--r-full);
+  padding: 0 20px; border-radius: var(--r-full);
   background: var(--md-sys-color-primary);
   color: var(--md-sys-color-on-primary);
-  font-size: 14px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; gap: 4px;
   transition: transform 0.15s, opacity 0.2s;
 }
 .quick-btn:active { transform: scale(0.96); }
 .quick-btn:disabled { opacity: 0.5; }
 .quick-note { margin: 6px 24px 0; font-size: 12px; font-weight: 500; color: var(--md-sys-color-outline); min-height: 16px; }
 
-/* ── M3 Transaction Rows ──────────────────────────────────── */
+/* ── Transaction Rows ──────────────────────────────────────── */
 .rows { padding: 0 18px; }
 .daybar {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  display: flex; justify-content: space-between; align-items: baseline;
   padding: 16px 8px 6px;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.05em;
   color: var(--md-sys-color-primary);
 }
 .row {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px; margin-bottom: 6px;
   background: var(--md-sys-color-surface-container);
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--r-md);
@@ -344,13 +344,8 @@ input, select, textarea { font: inherit; color: inherit; }
 .row.tappable { cursor: pointer; }
 .row.tappable:hover { background: var(--md-sys-color-surface-container-high); }
 .chip-dot {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
-  font-size: 19px;
-  flex: none;
+  width: 42px; height: 42px; border-radius: 14px;
+  display: grid; place-items: center; font-size: 19px; flex: none;
 }
 .row-mid { flex: 1; min-width: 0; }
 .row-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--md-sys-color-on-surface); }
@@ -358,25 +353,17 @@ input, select, textarea { font: inherit; color: inherit; }
 .row-right { text-align: right; flex: none; }
 .row-amt { font-size: 15px; font-weight: 600; }
 .row-bal { font-size: 11px; color: var(--md-sys-color-outline); margin-top: 2px; }
-
 .row-acts {
-  position: absolute;
-  right: 0; top: 0; bottom: 0;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 12px 0 28px;
+  position: absolute; right: 0; top: 0; bottom: 0;
+  display: flex; align-items: center; gap: 6px; padding: 0 12px 0 28px;
   background: linear-gradient(90deg, transparent 0%, var(--md-sys-color-surface-container-highest) 35%);
   transform: translateX(105%);
   transition: transform 0.22s var(--ease-m3);
 }
 .row.open .row-acts { transform: translateX(0); }
 .row-acts button {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--r-full);
-  display: grid;
-  place-items: center;
+  width: 36px; height: 36px; border-radius: var(--r-full);
+  display: grid; place-items: center;
   background: var(--md-sys-color-surface);
   border: 1px solid var(--md-sys-color-outline-variant);
   color: var(--md-sys-color-on-surface);
@@ -386,7 +373,49 @@ input, select, textarea { font: inherit; color: inherit; }
 .row-acts button.del { color: var(--md-sys-color-debit); }
 .row-acts button.del:hover { background: var(--md-sys-color-debit-container); color: var(--md-sys-color-on-debit-container); }
 
-/* ── M3 Spend Breakdown ───────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   SKELETON LOADER SYSTEM
+   Pulsing placeholder rows — shown during async fetch, swapped
+   out when data lands. Three widths give visual variety.
+   ═══════════════════════════════════════════════════════════════ */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.skel {
+  --skel-base: #2B2930;
+  --skel-shine: #36343B;
+  background: linear-gradient(90deg, var(--skel-base) 25%, var(--skel-shine) 50%, var(--skel-base) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--r-xs);
+}
+.skel-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px; margin-bottom: 6px;
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--r-md);
+}
+.skel-icon {
+  width: 42px; height: 42px; border-radius: 14px; flex: none;
+  /* inherits .skel shimmer */
+}
+.skel-lines { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+.skel-line { height: 11px; }
+.skel-line.w-60 { width: 60%; }
+.skel-line.w-40 { width: 40%; }
+.skel-line.w-75 { width: 75%; }
+.skel-line.w-30 { width: 30%; }
+.skel-amt { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none; }
+.skel-amt-main { width: 52px; height: 13px; }
+.skel-amt-sub  { width: 36px; height: 9px; }
+
+/* Skeleton hero stats */
+.skel-stat { height: 18px; width: 70%; }
+.skel-hero-amt { height: 40px; width: 55%; margin-top: 4px; }
+
+/* ── Spend Breakdown ───────────────────────────────────── */
 .breakdown {
   margin: 0 18px;
   padding: 16px;
@@ -403,11 +432,9 @@ input, select, textarea { font: inherit; color: inherit; }
 .brow .pc { font-size: 12px; font-weight: 600; color: var(--md-sys-color-on-surface-variant); width: 40px; text-align: right; }
 .brow .am { font-size: 14px; font-weight: 600; width: 84px; text-align: right; }
 
-/* ── M3 Filter & Search Bar ───────────────────────────────── */
+/* ── Filter & Search Bar ───────────────────────────────────── */
 .filters {
-  position: sticky;
-  top: 0;
-  z-index: 5;
+  position: sticky; top: 0; z-index: 5;
   padding: 8px 18px 12px;
   background: linear-gradient(180deg, var(--md-sys-color-surface) 75%, transparent);
   backdrop-filter: blur(12px);
@@ -419,25 +446,44 @@ input, select, textarea { font: inherit; color: inherit; }
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--r-full);
   padding: 12px 16px 12px 42px;
-  color: var(--md-sys-color-on-surface);
-  font-size: 14px;
+  color: var(--md-sys-color-on-surface); font-size: 14px;
   transition: border-color 0.2s;
 }
 .search input:focus { border-color: var(--md-sys-color-primary); outline: none; }
 .search .ic { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--md-sys-color-outline); }
-.chips {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
+
+/* ─── CHIPS: scroll fade affordance ───────────────────────
+   A mask-image gradient on the right edge signals "more to
+   see" when the chip list overflows, without any extra chrome.
+   ────────────────────────────────────────────────────────── */
+.chips-wrap {
+  position: relative;
   margin-top: 10px;
-  padding-bottom: 4px;
+}
+.chips-wrap::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 4px;
+  width: 48px;
+  background: linear-gradient(to right, transparent, var(--md-sys-color-surface) 90%);
+  pointer-events: none;
+  /* Only show the fade when chips are actually overflowing;
+     JS adds .has-overflow on the wrapper */
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.chips-wrap.has-overflow::after {
+  opacity: 1;
+}
+.chips {
+  display: flex; gap: 8px;
+  overflow-x: auto; padding-bottom: 4px;
   scrollbar-width: none;
 }
 .chips::-webkit-scrollbar { display: none; }
 .chip {
   flex: none;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 13px; font-weight: 600;
   padding: 7px 14px;
   border-radius: var(--r-full);
   border: 1px solid var(--md-sys-color-outline-variant);
@@ -451,13 +497,8 @@ input, select, textarea { font: inherit; color: inherit; }
   border-color: var(--md-sys-color-primary);
 }
 .uncat-nudge {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 10px;
-  padding: 10px 14px;
-  border-radius: var(--r-md);
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 10px; padding: 10px 14px; border-radius: var(--r-md);
   font-size: 13px;
   background: var(--md-sys-color-warn-container);
   border: 1px solid rgba(245, 209, 103, 0.4);
@@ -465,10 +506,9 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .uncat-nudge button { font-weight: 700; text-decoration: underline; flex: none; }
 
-/* ── M3 Portfolio & Holdings ──────────────────────────────── */
+/* ── Portfolio & Holdings ──────────────────────────────────── */
 .holding {
-  padding: 14px;
-  margin-bottom: 8px;
+  padding: 14px; margin-bottom: 8px;
   background: var(--md-sys-color-surface-container);
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--r-md);
@@ -476,11 +516,8 @@ input, select, textarea { font: inherit; color: inherit; }
 .h-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .h-name { font-size: 15px; font-weight: 600; line-height: 1.35; }
 .h-badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: var(--r-full);
-  flex: none;
+  font-size: 11px; font-weight: 700; padding: 3px 8px;
+  border-radius: var(--r-full); flex: none;
   border: 1px solid var(--md-sys-color-outline-variant);
   background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface-variant);
@@ -502,37 +539,33 @@ input, select, textarea { font: inherit; color: inherit; }
 .fold-body { display: none; padding: 10px 16px 14px; background: var(--md-sys-color-surface-container-low); }
 .fold-body.open { display: block; }
 
-/* ── M3 People & Debts ────────────────────────────────────── */
+/* ── People & Debts ────────────────────────────────────────── */
 .owed-bar {
-  margin: 0 18px 8px;
-  padding: 16px 18px;
+  margin: 0 18px 8px; padding: 16px 18px;
   border-radius: var(--r-lg);
   background: var(--md-sys-color-credit-container);
   border: 1px solid rgba(120, 220, 158, 0.35);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex; justify-content: space-between; align-items: center;
 }
 .owed-bar .k { font-size: 13.5px; font-weight: 700; color: var(--md-sys-color-on-credit-container); }
 .owed-bar .v { font-size: 20px; font-weight: 700; color: var(--md-sys-color-on-credit-container); }
 .avatar {
-  width: 40px; height: 40px; border-radius: var(--r-full); display: grid; place-items: center;
-  background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container);
+  width: 40px; height: 40px; border-radius: var(--r-full);
+  display: grid; place-items: center;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
   font-size: 16px; font-weight: 700; flex: none;
 }
 .stale { color: var(--md-sys-color-warn); }
 .mini {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--md-sys-color-primary);
-  margin-top: 5px;
-  padding: 4px 10px;
-  border-radius: var(--r-full);
+  font-size: 12px; font-weight: 700; color: var(--md-sys-color-primary);
+  margin-top: 5px; padding: 4px 10px; border-radius: var(--r-full);
   background: var(--md-sys-color-primary-container);
 }
 .confirm {
   display: none; padding: 14px; margin: 6px 0 10px; border-radius: var(--r-md);
-  background: var(--md-sys-color-surface-container-highest); border: 1px solid var(--md-sys-color-outline-variant); font-size: 13.5px;
+  background: var(--md-sys-color-surface-container-highest);
+  border: 1px solid var(--md-sys-color-outline-variant); font-size: 13.5px;
 }
 .confirm.show { display: block; }
 .confirm-btns { display: flex; gap: 8px; margin-top: 10px; }
@@ -541,21 +574,21 @@ input, select, textarea { font: inherit; color: inherit; }
 .confirm-btns .no { background: var(--md-sys-color-surface-container-low); border: 1px solid var(--md-sys-color-outline-variant); }
 .match-row {
   display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 8px;
-  background: var(--md-sys-color-surface-container); border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--r-md);
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant); border-radius: var(--r-md);
 }
 .match-row .m-acts { display: flex; flex-direction: column; gap: 6px; flex: none; }
 .match-row .m-acts button { font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: var(--r-full); }
 .match-row .yes { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); }
 .match-row .no { background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface-variant); }
 
-/* ── M3 Settings Cards ────────────────────────────────────── */
+/* ── Settings ────────────────────────────────────────────── */
 .set-group { padding: 0 18px; margin-top: 20px; }
 .set-group > p { font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--md-sys-color-primary); margin-bottom: 8px; padding-left: 4px; }
 .set-card {
   background: var(--md-sys-color-surface-container);
   border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--r-lg);
-  overflow: hidden;
+  border-radius: var(--r-lg); overflow: hidden;
 }
 .set-row {
   display: flex; justify-content: space-between; align-items: center; gap: 14px;
@@ -581,61 +614,41 @@ input, select, textarea { font: inherit; color: inherit; }
 .empty .e { font-size: 32px; opacity: 0.5; margin-bottom: 8px; color: var(--md-sys-color-primary); }
 .empty .t { font-size: 14px; color: var(--md-sys-color-on-surface-variant); line-height: 1.5; }
 
-/* ── M3 Navigation Bar (Expressive Pill Indicators) ────────── */
+/* ── Navigation Bar ────────────────────────────────────── */
 .nav {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: grid; grid-template-columns: repeat(5, 1fr);
   background: var(--md-sys-color-surface-container);
   border-top: 1px solid var(--md-sys-color-outline-variant);
-  padding-bottom: var(--safe-bot);
-  padding-top: 8px;
+  padding-bottom: var(--safe-bot); padding-top: 8px;
   z-index: 20;
 }
 .nav button {
   padding: 4px 0 10px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
   color: var(--md-sys-color-on-surface-variant);
   transition: color 0.2s var(--ease-m3);
 }
 .nav button .i-pill {
-  width: 56px;
-  height: 32px;
-  border-radius: var(--r-full);
-  display: grid;
-  place-items: center;
+  width: 56px; height: 32px; border-radius: var(--r-full);
+  display: grid; place-items: center;
   transition: background 0.2s var(--ease-m3), transform 0.15s;
 }
-.nav button .l {
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-.nav button[aria-current="page"] {
-  color: var(--md-sys-color-on-surface);
-}
+.nav button .l { font-size: 11.5px; font-weight: 600; letter-spacing: 0.01em; }
+.nav button[aria-current="page"] { color: var(--md-sys-color-on-surface); }
 .nav button[aria-current="page"] .i-pill {
   background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
 }
 .nav button:active .i-pill { transform: scale(0.92); }
 
-/* ── M3 Floating Action Button (FAB) ───────────────────────── */
+/* ── Floating Action Button ─────────────────────────────── */
 .fab {
-  position: absolute;
-  right: 20px;
-  bottom: calc(96px + var(--safe-bot));
-  width: 58px;
-  height: 58px;
-  border-radius: 20px;
+  position: absolute; right: 20px; bottom: calc(96px + var(--safe-bot));
+  width: 58px; height: 58px; border-radius: 20px;
   background: linear-gradient(135deg, var(--md-sys-color-primary), #B39DDB);
   color: var(--md-sys-color-on-primary);
-  display: grid;
-  place-items: center;
+  display: grid; place-items: center;
   box-shadow: 0 6px 18px rgba(0,0,0,0.5), 0 0 20px rgba(208,188,255,0.3);
   z-index: 21;
   transition: transform 0.18s var(--ease-m3);
@@ -643,7 +656,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .fab .material-symbols-rounded { font-size: 30px; font-weight: 600; }
 .fab:active { transform: scale(0.92); }
 
-/* ── M3 Bottom Sheets / Modals ────────────────────────────── */
+/* ── Bottom Sheets / Modals ────────────────────────────── */
 .overlay {
   position: fixed; inset: 0;
   background: rgba(15, 13, 19, 0.75);
@@ -653,24 +666,18 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .overlay.open { display: flex; }
 .sheet {
-  width: 100%;
-  max-width: 448px;
-  max-height: 90vh;
-  overflow-y: auto;
+  width: 100%; max-width: 448px; max-height: 90vh; overflow-y: auto;
   background: var(--md-sys-color-surface-container);
   border: 1px solid var(--md-sys-color-outline-variant);
-  border-bottom: none;
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  border-bottom: none; border-radius: var(--r-xl) var(--r-xl) 0 0;
   padding: 12px 22px calc(28px + var(--safe-bot));
   box-shadow: 0 -8px 30px rgba(0,0,0,0.6);
 }
 .sheet-handle {
-  width: 36px;
-  height: 4px;
+  width: 36px; height: 4px;
   background: var(--md-sys-color-outline);
   border-radius: var(--r-full);
-  margin: 0 auto 16px;
-  opacity: 0.6;
+  margin: 0 auto 16px; opacity: 0.6;
 }
 @media (prefers-reduced-motion: no-preference) {
   .overlay.open .sheet { animation: m3rise 0.28s var(--ease-m3); }
@@ -683,7 +690,8 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .sheet-title button {
   width: 32px; height: 32px; border-radius: var(--r-full);
-  display: grid; place-items: center; background: var(--md-sys-color-surface-container-high);
+  display: grid; place-items: center;
+  background: var(--md-sys-color-surface-container-high);
 }
 .field { margin-bottom: 15px; }
 .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--md-sys-color-on-surface-variant); margin-bottom: 6px; }
@@ -693,83 +701,50 @@ input, select, textarea { font: inherit; color: inherit; }
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--r-sm);
   padding: 13px 14px;
-  color: var(--md-sys-color-on-surface);
-  font-size: 15px;
+  color: var(--md-sys-color-on-surface); font-size: 15px;
   transition: border-color 0.2s;
 }
 .field input:focus, .field select:focus {
-  border-color: var(--md-sys-color-primary);
-  outline: none;
+  border-color: var(--md-sys-color-primary); outline: none;
   background: var(--md-sys-color-surface-container-highest);
 }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .check { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--md-sys-color-on-surface); }
 .check input { width: 18px; height: 18px; accent-color: var(--md-sys-color-primary); }
-
 .btn {
-  width: 100%;
-  padding: 14px;
-  border-radius: var(--r-full);
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-  font-size: 15px;
-  font-weight: 700;
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  width: 100%; padding: 14px; border-radius: var(--r-full);
+  background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary);
+  font-size: 15px; font-weight: 700; margin-top: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
   transition: transform 0.15s, opacity 0.2s;
 }
 .btn:active { transform: scale(0.97); }
-.btn-danger {
-  background: var(--md-sys-color-debit-container);
-  color: var(--md-sys-color-on-debit-container);
-  border: 1px solid rgba(255, 180, 171, 0.4);
-}
-.btn-ghost {
-  background: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-on-surface);
-  border: 1px solid var(--md-sys-color-outline-variant);
-}
-.btn-tonal {
-  background: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
-}
+.btn-danger { background: var(--md-sys-color-debit-container); color: var(--md-sys-color-on-debit-container); border: 1px solid rgba(255, 180, 171, 0.4); }
+.btn-ghost { background: var(--md-sys-color-surface-container-high); color: var(--md-sys-color-on-surface); border: 1px solid var(--md-sys-color-outline-variant); }
+.btn-tonal { background: var(--md-sys-color-secondary-container); color: var(--md-sys-color-on-secondary-container); }
 .parsed {
   background: var(--md-sys-color-surface-container-high);
   border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--r-md);
-  padding: 12px 14px; margin-bottom: 16px; display: none;
+  border-radius: var(--r-md); padding: 12px 14px; margin-bottom: 16px; display: none;
 }
 .parsed-row { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; }
 .parsed-row .k { color: var(--md-sys-color-on-surface-variant); }
 .hint { font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); line-height: 1.55; margin-bottom: 14px; }
-
 .mgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.mgrid button {
-  padding: 14px 0; border-radius: var(--r-md);
-  background: var(--md-sys-color-surface-container-high);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  font-size: 14px; font-weight: 600;
-}
-.mgrid button[aria-pressed="true"] {
-  background: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-  border-color: var(--md-sys-color-primary);
-}
+.mgrid button { padding: 14px 0; border-radius: var(--r-md); background: var(--md-sys-color-surface-container-high); border: 1px solid var(--md-sys-color-outline-variant); font-size: 14px; font-weight: 600; }
+.mgrid button[aria-pressed="true"] { background: var(--md-sys-color-primary); color: var(--md-sys-color-on-primary); border-color: var(--md-sys-color-primary); }
 .mgrid button:disabled { opacity: 0.25; cursor: default; }
 .ynav { display: flex; align-items: center; justify-content: center; gap: 24px; margin-bottom: 16px; }
 .ynav .y { font-size: 18px; font-weight: 700; min-width: 64px; text-align: center; }
 
-/* ── M3 Toast Notification ────────────────────────────────── */
+/* ── Toast ────────────────────────────────────────────────── */
 .toast {
-  position: fixed; left: 50%; bottom: calc(110px + var(--safe-bot)); transform: translate(-50%, 20px);
+  position: fixed; left: 50%; bottom: calc(110px + var(--safe-bot));
+  transform: translate(-50%, 20px);
   background: var(--md-sys-color-surface-container-highest);
   border: 1px solid var(--md-sys-color-outline-variant);
   color: var(--md-sys-color-on-surface);
-  border-radius: var(--r-full);
-  padding: 12px 22px; font-size: 14px; font-weight: 600;
+  border-radius: var(--r-full); padding: 12px 22px; font-size: 14px; font-weight: 600;
   opacity: 0; pointer-events: none;
   box-shadow: 0 6px 20px rgba(0,0,0,0.5);
   transition: opacity 0.2s, transform 0.2s var(--ease-m3);
@@ -810,7 +785,14 @@ input, select, textarea { font: inherit; color: inherit; }
           <div class="ribbon-delta" id="hero-delta">&nbsp;</div>
         </div>
       </div>
-      <svg class="ribbon-chart" id="ribbon-svg" viewBox="0 0 400 96" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <svg class="ribbon-chart" id="ribbon-svg" viewBox="0 0 400 96" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="spendGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stop-color="#D0BCFF" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#D0BCFF" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+      </svg>
       <div class="ribbon-axis"><span id="axis-from">—</span><span id="axis-to">—</span></div>
       <div class="stat-rail">
         <div class="stat">
@@ -822,7 +804,7 @@ input, select, textarea { font: inherit; color: inherit; }
           <div class="stat-v num" id="stat-net">₹—</div>
         </div>
         <div class="stat">
-          <div class="stat-k">Owed to you</div>
+          <div class="stat-k">Owed · total</div>
           <div class="stat-v num" id="stat-owed">₹—</div>
         </div>
       </div>
@@ -854,7 +836,7 @@ input, select, textarea { font: inherit; color: inherit; }
       <button data-act="tab" data-tab="expenses">See all <span class="material-symbols-rounded" style="font-size:16px;">arrow_forward</span></button>
     </div>
     <div class="rows" id="recent-rows">
-      <div class="empty"><div class="e">₹</div><div class="t">Nothing here yet for this month.</div></div>
+      <div id="recent-skeleton">${skeletonRows(4)}</div>
     </div>
 
     <div class="sec">
@@ -884,11 +866,15 @@ input, select, textarea { font: inherit; color: inherit; }
         <span class="material-symbols-rounded ic">search</span>
         <input id="search" placeholder="Search merchant, note or category" autocomplete="off" />
       </div>
-      <div class="chips" id="chips"></div>
+      <!-- chips-wrap gets has-overflow class from JS when chips scroll -->
+      <div class="chips-wrap" id="chips-wrap">
+        <div class="chips" id="chips"></div>
+      </div>
       <div id="uncat-hint"></div>
     </div>
     <div class="rows" id="expense-rows">
-      <div class="empty"><div class="e">₹</div><div class="t">No expenses recorded for this month.</div></div>
+      <!-- skeleton shown until data loads -->
+      <div id="expense-skeleton">${skeletonRows(6)}</div>
     </div>
   </section>
 
@@ -922,7 +908,7 @@ input, select, textarea { font: inherit; color: inherit; }
       </span>
     </div>
     <div class="rows" id="holding-rows">
-      <div class="empty"><div class="e">₹</div><div class="t">Import your statement or add a holding.</div></div>
+      <div id="holding-skeleton">${skeletonRows(3)}</div>
     </div>
 
     <div class="fold" id="lt-fold" style="display:none">
@@ -952,7 +938,7 @@ input, select, textarea { font: inherit; color: inherit; }
       <span class="v num" id="owed-total">₹0</span>
     </div>
     <div class="rows" id="debt-rows">
-      <div class="empty"><div class="e"><span class="material-symbols-rounded">check_circle</span></div><div class="t">Nobody owes you anything.</div></div>
+      <div id="debt-skeleton">${skeletonRows(2)}</div>
     </div>
 
     <div class="sec">
@@ -1193,6 +1179,31 @@ input, select, textarea { font: inherit; color: inherit; }
 
 <script>
 'use strict';
+
+/* ═══════════════════════════════════════════════════════════════
+   SKELETON HELPER — called at HTML-parse time via template literal
+   (the ${skeletonRows(n)} in the static HTML above is resolved
+   by the inline function defined here; we re-declare it at runtime
+   for dynamic use)
+   ═══════════════════════════════════════════════════════════════ */
+function skeletonRows(n, widths) {
+  const pairs = widths || [['w-60','w-40'],['w-75','w-30'],['w-60','w-40'],['w-75','w-30']];
+  return Array.from({ length: n }, (_, i) => {
+    const [a, b] = pairs[i % pairs.length];
+    return `<div class="skel-row">
+      <div class="skel skel-icon"></div>
+      <div class="skel-lines">
+        <div class="skel ${a} skel-line"></div>
+        <div class="skel ${b} skel-line"></div>
+      </div>
+      <div class="skel-amt">
+        <div class="skel skel-amt-main skel-line"></div>
+        <div class="skel skel-amt-sub skel-line"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 /* ═══════════════════════════════════════════════════════════════
    CONFIG & STATE
    ═══════════════════════════════════════════════════════════════ */
@@ -1266,6 +1277,24 @@ function toast(msg, bad = false) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   CHIPS OVERFLOW DETECTION
+   Adds .has-overflow to .chips-wrap when the inner .chips
+   element actually overflows, triggering the fade mask.
+   ═══════════════════════════════════════════════════════════════ */
+function updateChipsOverflow() {
+  const wrap = $('chips-wrap');
+  const inner = $('chips');
+  if (!wrap || !inner) return;
+  const overflows = inner.scrollWidth > inner.clientWidth + 1;
+  wrap.classList.toggle('has-overflow', overflows);
+  // Re-check on scroll so fade disappears when user reaches the end
+  inner.onscroll = () => {
+    const atEnd = inner.scrollLeft + inner.clientWidth >= inner.scrollWidth - 4;
+    wrap.classList.toggle('has-overflow', !atEnd && inner.scrollWidth > inner.clientWidth + 1);
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════
    SUPABASE
    ═══════════════════════════════════════════════════════════════ */
 async function sb(path, { method = 'GET', body, prefer } = {}) {
@@ -1274,8 +1303,7 @@ async function sb(path, { method = 'GET', body, prefer } = {}) {
     const res = await fetch(`${SB_URL.replace(/\/+$/,'')}/rest/v1/${path}`, {
       method,
       headers: {
-        apikey: SB_KEY,
-        Authorization: `Bearer ${SB_KEY}`,
+        apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`,
         'Content-Type': 'application/json',
         Prefer: prefer || 'return=representation'
       },
@@ -1291,7 +1319,7 @@ async function sb(path, { method = 'GET', body, prefer } = {}) {
     return text ? JSON.parse(text) : [];
   } catch (err) {
     console.error(err);
-    toast('Can’t reach Supabase — check network', true);
+    toast('Can't reach Supabase — check network', true);
     return null;
   }
 }
@@ -1301,62 +1329,37 @@ const sbUpdate = (t, id, body) => sb(`${t}?id=eq.${encodeURIComponent(id)}`, { m
 const sbDelete = (t, id)       => sb(`${t}?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', prefer: 'return=minimal' });
 
 /* ═══════════════════════════════════════════════════════════════
-   GEMINI API ENGINE (Auto-fallback & JSON support)
+   GEMINI API ENGINE
    ═══════════════════════════════════════════════════════════════ */
 async function gemini(prompt, maxTokens = 600, jsonMode = false) {
   const key = (GM_KEY || '').trim();
   if (!key) return null;
-
-  // Try current generation models in sequence
   const candidateModels = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-3-flash-preview'];
   let lastErrMsg = '';
-
   for (const model of candidateModels) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
       const payload = {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: maxTokens,
+          temperature: 0.2, maxOutputTokens: maxTokens,
           ...(jsonMode ? { responseMimeType: "application/json" } : {})
         }
       };
-
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (res.status === 404 || res.status === 503) {
-        console.warn(`Gemini model ${model} not available (${res.status}), trying next candidate...`);
-        lastErrMsg = `Model ${model} returned ${res.status}`;
-        continue;
-      }
-
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if (res.status === 404 || res.status === 503) { lastErrMsg = `Model ${model} returned ${res.status}`; continue; }
       if (!res.ok) {
         const errorJson = await res.json().catch(() => null);
         const msg = errorJson?.error?.message || `HTTP ${res.status}`;
-        console.error(`Gemini (${model}) error:`, res.status, msg);
-        if (res.status === 400 || res.status === 403) {
-          toast(`Gemini error: ${msg}`, true);
-          return null;
-        }
-        lastErrMsg = msg;
-        continue;
+        if (res.status === 400 || res.status === 403) { toast(`Gemini error: ${msg}`, true); return null; }
+        lastErrMsg = msg; continue;
       }
-
       const data = await res.json();
       const output = data?.candidates?.[0]?.content?.parts?.map(p => p.text).filter(Boolean).join('');
       if (output) return output;
-    } catch (err) {
-      console.error(`Gemini fetch error on ${model}:`, err);
-      lastErrMsg = err.message;
-    }
+    } catch (err) { lastErrMsg = err.message; }
   }
-
-  toast(lastErrMsg ? `Gemini: ${lastErrMsg}` : 'Couldn’t reach Gemini API', true);
+  toast(lastErrMsg ? `Gemini: ${lastErrMsg}` : 'Couldn't reach Gemini API', true);
   return null;
 }
 
@@ -1479,6 +1482,9 @@ async function loadHome() {
   if (!SB_URL) return;
   const token = ++loadToken;
 
+  // Show skeletons immediately while fetching
+  $('recent-rows').innerHTML = skeletonRows(4);
+
   const [start, end] = monthRange(view.year, view.month);
   const [txns, debts] = await Promise.all([
     sbGet('transactions', `txn_date=gte.${start}&txn_date=lt.${end}&order=txn_date.desc&limit=1000`),
@@ -1509,7 +1515,7 @@ async function loadHome() {
   const recentAll = [...txns].sort((a, b) => String(b.txn_date).localeCompare(String(a.txn_date)));
   $('recent-rows').innerHTML = recentAll.length
     ? recentAll.slice(0, 6).map(t => txnRow(t)).join('')
-    : `<div class="empty"><div class="e">₹</div><div class="t">Nothing recorded for this month yet.</div></div>`;
+    : `<div class="empty"><div class="e">₹</div><div class="t">Nothing here yet — type an expense above or tap <strong style="color:var(--md-sys-color-primary)">+</strong> to add one.</div></div>`;
 
   renderBreakdown(debits, spent);
   if (GM_KEY) loadInsight(false);
@@ -1524,7 +1530,6 @@ async function renderHeroDelta(spent, invested) {
   const prevSpent = (prevTxns || [])
     .filter(t => t.category !== 'Investment')
     .reduce((s, t) => s + Number(t.amount), 0);
-
   const investedTotal = invested.reduce((s, t) => s + Number(t.amount), 0);
   const parts = [];
   if (prevSpent > 0) {
@@ -1537,48 +1542,69 @@ async function renderHeroDelta(spent, invested) {
   $('hero-delta').innerHTML = parts.length ? esc(parts.join(' · ')) : '&nbsp;';
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   RIBBON CHART — Cumulative spend line
+   ─────────────────────────────────────────────────────────────
+   Instead of the account balance (erratic, credit+debit noise),
+   we plot the running total of debits through the month.
+   This gives a monotonically increasing curve that accurately
+   communicates "pace of spending" at a glance.
+
+   Bars still show per-day spend volume underneath.
+   ═══════════════════════════════════════════════════════════════ */
 function renderRibbon(all, debits) {
   const days = new Date(view.year, view.month + 1, 0).getDate();
-  const W = 400, H = 96, padY = 12, barH = 22;
+  const W = 400, H = 96, padY = 10, barH = 20;
+  const chartBottom = H - 4;           // bottom of drawable area
+  const lineTop     = padY;            // topmost y the line can reach
 
+  // Per-day debit totals
   const perDay = new Array(days).fill(0);
   debits.forEach(t => {
     const i = parseDate(t.txn_date).getDate() - 1;
     if (i >= 0 && i < days) perDay[i] += Number(t.amount);
   });
 
-  const balances = new Array(days).fill(null);
-  [...all].sort((a, b) => String(a.txn_date).localeCompare(String(b.txn_date))).forEach(t => {
-    if (t.balance_after == null) return;
-    const i = parseDate(t.txn_date).getDate() - 1;
-    if (i >= 0 && i < days) balances[i] = Number(t.balance_after);
-  });
-  let carry = null;
-  for (let i = 0; i < days; i++) { if (balances[i] == null) balances[i] = carry; else carry = balances[i]; }
-  for (let i = days - 1; i >= 0; i--) { if (balances[i] == null) balances[i] = carry; else carry = balances[i]; }
+  // Cumulative spend (running sum)
+  const cumulative = new Array(days).fill(0);
+  let running = 0;
+  for (let i = 0; i < days; i++) { running += perDay[i]; cumulative[i] = running; }
 
-  const svg = $('ribbon-svg');
-  const known = balances.filter(v => v != null);
+  const maxCum   = Math.max(running, 1);
   const maxSpend = Math.max(...perDay, 1);
-  const step = days > 1 ? W / (days - 1) : W;
+  const step     = days > 1 ? W / (days - 1) : W;
 
+  // Draw per-day bars (small, near bottom)
   const bars = perDay.map((v, i) => {
     if (v <= 0) return '';
     const h = Math.max(2, (v / maxSpend) * barH);
-    return `<rect class="bar" x="${(i * step).toFixed(1)}" y="${(H - h).toFixed(1)}" width="3" height="${h.toFixed(1)}" rx="1.5"/>`;
+    return `<rect class="bar" x="${(i * step).toFixed(1)}" y="${(chartBottom - h).toFixed(1)}" width="3" height="${h.toFixed(1)}" rx="1.5"/>`;
   }).join('');
 
-  let line = '';
-  if (known.length > 1) {
-    const lo = Math.min(...known), hi = Math.max(...known), span = hi - lo || 1;
-    const top = padY, bottom = H - barH - 12;
-    const pts = balances.map((v, i) =>
-      `${(i * step).toFixed(1)},${(bottom - ((v - lo) / span) * (bottom - top)).toFixed(1)}`);
-    line = `<path class="line" d="M ${pts.join(' L ')}"/>`;
-  }
-  svg.innerHTML = line + bars;
+  // Cumulative spend line points
+  // y=lineTop when cumulative = maxCum, y=chartBottom when cumulative = 0
+  const lineRange = chartBottom - lineTop - barH - 6;
+  const toY = v => (chartBottom - barH - 6) - (v / maxCum) * lineRange;
+  const pts = cumulative.map((v, i) => `${(i * step).toFixed(1)},${toY(v).toFixed(1)}`);
+
+  // Build closed fill path (line + drop to bottom)
+  const firstX = 0, lastX = ((days - 1) * step).toFixed(1);
+  const fillPath = `M ${pts.join(' L ')} L ${lastX},${chartBottom - barH - 4} L ${firstX},${chartBottom - barH - 4} Z`;
+  const linePath = `M ${pts.join(' L ')}`;
+
+  const svg = $('ribbon-svg');
+  // Preserve the defs block (gradient lives there)
+  const defs = svg.querySelector('defs');
+  svg.innerHTML = '';
+  if (defs) svg.appendChild(defs);
+
+  svg.insertAdjacentHTML('beforeend',
+    `${bars}
+     <path class="cum-fill" d="${fillPath}"/>
+     <path class="cum-line" d="${linePath}"/>`);
+
   $('axis-from').textContent = `1 ${MONTHS[view.month]}`;
-  $('axis-to').textContent = `${days} ${MONTHS[view.month]}`;
+  $('axis-to').textContent   = `${days} ${MONTHS[view.month]}`;
 }
 
 function renderBreakdown(debits, total) {
@@ -1588,14 +1614,9 @@ function renderBreakdown(debits, total) {
     return;
   }
   const totals = {};
-  debits.forEach(t => {
-    const c = t.category || 'Other';
-    totals[c] = (totals[c] || 0) + Number(t.amount);
-  });
+  debits.forEach(t => { const c = t.category || 'Other'; totals[c] = (totals[c] || 0) + Number(t.amount); });
   const ranked = Object.entries(totals).sort((a, b) => b[1] - a[1]);
-
-  const bar = ranked.map(([c, v]) =>
-    `<i style="flex:${v};background:${catColor(c)}"></i>`).join('');
+  const bar  = ranked.map(([c, v]) => `<i style="flex:${v};background:${catColor(c)}"></i>`).join('');
   const rows = ranked.map(([c, v]) => `
     <div class="brow">
       <span class="sw" style="background:${catColor(c)}"></span>
@@ -1614,31 +1635,25 @@ async function loadInsight(force) {
   const card = $('ai-card'), body = $('ai-body');
   const key = `insight_${view.year}_${view.month}`;
   card.style.display = 'block';
-
   if (!force) {
     try {
       const hit = JSON.parse(localStorage.getItem(key) || 'null');
       if (hit && (Date.now() - hit.ts) < 6 * 3600e3) { body.textContent = hit.text; return; }
     } catch {}
   }
-
   const debits = cache.month.filter(t => t.type === 'debit' && t.category !== 'Investment');
   if (!debits.length) { body.textContent = 'Not enough transactions this month for an analysis.'; return; }
   body.innerHTML = '<span class="spin">↻</span> Analysing your spending pattern with Gemini…';
-
   const totals = {};
   debits.forEach(t => { const c = t.category || 'Other'; totals[c] = Math.round((totals[c] || 0) + Number(t.amount)); });
-
   const prev = new Date(view.year, view.month - 1, 1);
   const [pStart, pEnd] = monthRange(prev.getFullYear(), prev.getMonth());
   const prevTxns = await sbGet('transactions',
     `txn_date=gte.${pStart}&txn_date=lt.${pEnd}&type=eq.debit&select=amount,category&limit=1000`);
   const prevTotals = {};
   (prevTxns || []).forEach(t => { const c = t.category || 'Other'; prevTotals[c] = Math.round((prevTotals[c] || 0) + Number(t.amount)); });
-
   const top = [...debits].sort((a, b) => b.amount - a.amount).slice(0, 5)
     .map(t => `${t.merchant_display || 'unknown'} ₹${Math.round(t.amount)}`);
-
   const text = await gemini(
 `You are analyzing an individual's personal bank ledger in India. Be direct and concise.
 
@@ -1648,7 +1663,6 @@ Previous month: ${JSON.stringify(prevTotals)}
 Top expenses: ${top.join('; ')}
 
 Summarize the most important shift and largest outflow in 2-3 short sentences. Cite real numbers with the ₹ sign. No markdown bullets. Maximum 60 words.`, 300);
-
   const out = text || 'Could not generate insight for this period.';
   body.textContent = out;
   if (text) { try { localStorage.setItem(key, JSON.stringify({ text, ts: Date.now() })); } catch {} }
@@ -1661,6 +1675,10 @@ async function loadExpenses() {
   syncMonthLabels();
   if (!SB_URL) return;
   const token = ++loadToken;
+
+  // Show skeletons immediately
+  $('expense-rows').innerHTML = skeletonRows(6);
+
   const [start, end] = monthRange(view.year, view.month);
   const txns = await sbGet('transactions',
     `txn_date=gte.${start}&txn_date=lt.${end}&type=eq.debit&order=txn_date.desc&limit=1000`);
@@ -1680,6 +1698,9 @@ async function loadExpenses() {
         ${EMOJI[c] || '·'} ${esc(c)} (${n})</button>`;
     }).join('');
 
+  // Detect overflow after chips render
+  requestAnimationFrame(updateChipsOverflow);
+
   const uncat = txns.filter(t => !t.category || t.category === 'Other').length;
   $('uncat-hint').innerHTML = (uncat && catFilter !== 'Other')
     ? `<div class="uncat-nudge"><span>${uncat} expense${uncat === 1 ? '' : 's'} without category</span>
@@ -1695,12 +1716,15 @@ function renderExpenseRows() {
   if (q) list = list.filter(t =>
     `${t.merchant_display || ''} ${t.merchant_raw || ''} ${t.note || ''} ${t.category || ''}`
       .toLowerCase().includes(q));
-
   const el = $('expense-rows');
   if (!list.length) {
-    el.innerHTML = `<div class="empty"><div class="e"><span class="material-symbols-rounded">search_off</span></div><div class="t">${
-      q || catFilter !== 'all' ? 'No transactions match this filter.' : 'No expenses recorded for this month.'
-    }</div></div>`;
+    el.innerHTML = `<div class="empty"><div class="e"><span class="material-symbols-rounded">${q || catFilter !== 'all' ? 'search_off' : 'receipt_long'}</span></div><div class="t">${
+      q ? `Nothing matches "${esc(q)}".` :
+      catFilter !== 'all' ? `No ${esc(catFilter)} expenses this month.` :
+      'No expenses yet this month.'
+    }</div>${
+      (!q && catFilter === 'all') ? `<button data-act="add-expense" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:var(--r-full);background:var(--md-sys-color-primary);color:var(--md-sys-color-on-primary);font-size:13px;font-weight:700;"><span class="material-symbols-rounded" style="font-size:18px">add</span>Add first expense</button>` : ''
+    }</div>`;
     return;
   }
   el.innerHTML = groupByDay(list).map(([day, items]) => {
@@ -1716,16 +1740,18 @@ function renderExpenseRows() {
    ═══════════════════════════════════════════════════════════════ */
 async function loadPortfolio() {
   if (!SB_URL) return;
+
+  // Show skeletons
+  $('holding-rows').innerHTML = skeletonRows(3);
+
   const invs = await sbGet('investments', 'order=invested_amount.desc');
   if (!invs) return;
   cache.holdings = invs;
-
-  const active = invs.filter(i => i.mode !== 'long_term_hold');
+  const active   = invs.filter(i => i.mode !== 'long_term_hold');
   const longTerm = invs.filter(i => i.mode === 'long_term_hold');
   const cur = i => Number(i.current_value != null ? i.current_value : i.invested_amount);
-
   const invested = active.reduce((s, i) => s + Number(i.invested_amount), 0);
-  const value = active.reduce((s, i) => s + cur(i), 0);
+  const value    = active.reduce((s, i) => s + cur(i), 0);
   const pnl = value - invested;
   const pct = invested > 0 ? (pnl / invested * 100) : 0;
 
@@ -1757,7 +1783,7 @@ async function loadPortfolio() {
 
 function holdingRow(i, showPnl, biggest) {
   const invested = Number(i.invested_amount);
-  const current = Number(i.current_value != null ? i.current_value : i.invested_amount);
+  const current  = Number(i.current_value != null ? i.current_value : i.invested_amount);
   const pnl = current - invested;
   const pct = invested > 0 ? (pnl / invested * 100) : 0;
   const label = { mutual_fund: 'Fund', stock: 'Stock', crypto: 'Crypto' }[i.type] || 'Other';
@@ -1783,38 +1809,29 @@ async function estimatePrices() {
   const btn = $('btn-prices');
   const holdings = cache.holdings.filter(i => i.mode !== 'long_term_hold');
   if (!holdings.length) { toast('No active holdings'); return; }
-
-  btn.textContent = 'Estimating…';
-  btn.disabled = true;
+  btn.textContent = 'Estimating…'; btn.disabled = true;
   try {
     const raw = await gemini(
 `For each Indian asset below give your best estimate of the current market price per unit in INR.
 ${holdings.map(h => `- ${h.name} (${h.type}${h.ticker ? ', ' + h.ticker : ''})`).join('\n')}
-
 Reply with only a JSON array: [{"name":"<exact name as given>","price_per_unit":<number>}]`, 700, true);
     const list = parseJSON(raw);
-    if (!Array.isArray(list)) { toast('Couldn’t parse price estimates', true); return; }
-
+    if (!Array.isArray(list)) { toast('Couldn't parse price estimates', true); return; }
     const byName = new Map(list
       .filter(p => p && typeof p.name === 'string' && Number(p.price_per_unit) > 0)
       .map(p => [p.name.trim().toLowerCase(), Number(p.price_per_unit)]));
-
     let n = 0;
     for (const h of holdings) {
       const price = byName.get(String(h.name).trim().toLowerCase());
       if (!price) continue;
       h.current_value = +(Number(h.units) * price).toFixed(2);
-      h.estimated = true;
-      n++;
+      h.estimated = true; n++;
     }
     if (!n) { toast('No holdings matched estimates', true); return; }
     toast(`${n} holding price${n === 1 ? '' : 's'} estimated (not saved)`);
     const biggest = Math.max(...holdings.map(h => Number(h.current_value || h.invested_amount)), 1);
     $('holding-rows').innerHTML = holdings.map(h => holdingRow(h, true, biggest)).join('');
-  } finally {
-    btn.textContent = 'Estimate prices';
-    btn.disabled = false;
-  }
+  } finally { btn.textContent = 'Estimate prices'; btn.disabled = false; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1831,7 +1848,7 @@ function addDismissedMatch(key) {
 
 function computeMatches(debts, credits, incomeSources) {
   const dismissed = getDismissedMatches();
-  const keywords = (incomeSources || []).map(s => (s.credit_keyword || '').toLowerCase()).filter(Boolean);
+  const keywords  = (incomeSources || []).map(s => (s.credit_keyword || '').toLowerCase()).filter(Boolean);
   const usedCredits = new Set();
   const matches = [];
   (debts || [])
@@ -1882,15 +1899,12 @@ async function confirmMatch(debtId, creditId) {
   toast('Marked as settled');
   loadPeople(); loadHome();
 }
-function dismissMatch(debtId, creditId) {
-  addDismissedMatch(`${debtId}_${creditId}`);
-  loadPeople();
-}
+function dismissMatch(debtId, creditId) { addDismissedMatch(`${debtId}_${creditId}`); loadPeople(); }
 
 async function hmacHex(secret, message) {
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
+  const sig  = await crypto.subtle.sign('HMAC', key, enc.encode(message));
   return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
@@ -1900,24 +1914,18 @@ async function syncCoindcx() {
   btn.disabled = true; btn.textContent = 'Syncing…';
   try {
     const body = JSON.stringify({ timestamp: Date.now() });
-    const sig = await hmacHex(CX_SECRET, body);
+    const sig  = await hmacHex(CX_SECRET, body);
     const balRes = await fetch('https://api.coindcx.com/exchange/v1/users/balances', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-AUTH-APIKEY': CX_KEY, 'X-AUTH-SIGNATURE': sig },
       body
     });
     if (!balRes.ok) { toast(`CoinDCX error (${balRes.status})`, true); return; }
-    const balances = (await balRes.json())
-      .filter(b => Number(b.balance || 0) + Number(b.locked_balance || 0) > 0);
+    const balances = (await balRes.json()).filter(b => Number(b.balance || 0) + Number(b.locked_balance || 0) > 0);
     if (!balances.length) { toast('No non-zero CoinDCX balances'); return; }
-
     const tickerRes = await fetch('https://api.coindcx.com/exchange/ticker');
     const tickers = tickerRes.ok ? await tickerRes.json() : [];
-    const priceFor = currency => {
-      const t = tickers.find(x => x.market === `${currency}INR`);
-      return t ? Number(t.last_price) : null;
-    };
-
+    const priceFor = currency => { const t = tickers.find(x => x.market === `${currency}INR`); return t ? Number(t.last_price) : null; };
     let n = 0;
     for (const b of balances) {
       const units = Number(b.balance || 0) + Number(b.locked_balance || 0);
@@ -1926,10 +1934,7 @@ async function syncCoindcx() {
       const existing = cache.holdings.find(h => h.source === 'coindcx' && h.ticker === b.currency);
       const patch = existing
         ? { units, ...(current_value != null ? { current_value } : {}) }
-        : {
-            name: `${b.currency} (CoinDCX)`, type: 'crypto', source: 'coindcx', ticker: b.currency,
-            units, invested_amount: current_value ?? 0, current_value: current_value ?? 0, mode: 'active'
-          };
+        : { name: `${b.currency} (CoinDCX)`, type: 'crypto', source: 'coindcx', ticker: b.currency, units, invested_amount: current_value ?? 0, current_value: current_value ?? 0, mode: 'active' };
       const ok = existing ? await sbUpdate('investments', existing.id, patch) : await sbInsert('investments', patch);
       if (ok !== null) n++;
     }
@@ -1938,9 +1943,7 @@ async function syncCoindcx() {
   } catch (err) {
     console.error(err);
     toast('CoinDCX unreachable (browser CORS restriction)', true);
-  } finally {
-    btn.disabled = false; btn.textContent = 'Sync CoinDCX';
-  }
+  } finally { btn.disabled = false; btn.textContent = 'Sync CoinDCX'; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1948,6 +1951,10 @@ async function syncCoindcx() {
    ═══════════════════════════════════════════════════════════════ */
 async function loadPeople() {
   if (!SB_URL) return;
+
+  // Show skeleton in debt section while loading
+  $('debt-rows').innerHTML = skeletonRows(2);
+
   const now = new Date();
   const twoMonthsAgo = ymd(new Date(now.getFullYear(), now.getMonth() - 1, 1));
   const [debts, household, recentCredits, incomeSources] = await Promise.all([
@@ -1956,9 +1963,7 @@ async function loadPeople() {
     sbGet('transactions', `type=eq.credit&txn_date=gte.${twoMonthsAgo}&order=txn_date.desc&limit=20`),
     sbGet('income_sources', 'is_active=eq.true&order=name.asc')
   ]);
-
   renderMatches(computeMatches(debts, recentCredits, incomeSources));
-
   const dEl = $('debt-rows');
   if (!debts || !debts.length) {
     dEl.innerHTML = `<div class="empty"><div class="e"><span class="material-symbols-rounded">check_circle</span></div><div class="t">Nobody owes you anything.</div></div>`;
@@ -1967,7 +1972,7 @@ async function loadPeople() {
     $('owed-bar').style.display = 'flex';
     $('owed-total').textContent = '₹' + inr(debts.reduce((s, d) => s + Number(d.amount) - Number(d.amount_settled || 0), 0));
     dEl.innerHTML = debts.map(d => {
-      const out = Number(d.amount) - Number(d.amount_settled || 0);
+      const out  = Number(d.amount) - Number(d.amount_settled || 0);
       const name = d.people?.name || 'Unknown';
       const stale = (Date.now() - parseDate(d.debt_date)) / 86400000 > 30;
       return `
@@ -1991,7 +1996,6 @@ async function loadPeople() {
       </div>`;
     }).join('');
   }
-
   $('household-rows').innerHTML = (household && household.length)
     ? household.map(h => `
       <div class="row">
@@ -2082,26 +2086,21 @@ function openDeleteExpense(id) {
    SAVE HANDLERS
    ═══════════════════════════════════════════════════════════════ */
 async function saveExpense() {
-  const amount = parseFloat($('exp-amount').value);
+  const amount   = parseFloat($('exp-amount').value);
   const merchant = $('exp-merchant').value.trim();
-  const date = $('exp-date').value;
-  const reimb = $('exp-reimb').checked;
+  const date     = $('exp-date').value;
+  const reimb    = $('exp-reimb').checked;
   const remember = $('exp-remember').checked;
-  const id = $('exp-id').value;
-  let category = $('exp-category').value;
-
+  const id       = $('exp-id').value;
+  let category   = $('exp-category').value;
   if (!(amount > 0)) { toast('Enter amount above zero', true); return; }
-  if (!merchant) { toast('Add a merchant description', true); return; }
-  if (!date) { toast('Select a date', true); return; }
-
+  if (!merchant)     { toast('Add a merchant description', true); return; }
+  if (!date)         { toast('Select a date', true); return; }
   if (GM_KEY && category === 'Other') category = (await aiCategorise(merchant)) || 'Other';
   const txn_date = new Date(`${date}T12:00:00`).toISOString();
-
   if (remember) await rememberMerchant(merchant, category);
-
   if (id) {
-    const ok = await sbUpdate('transactions', id,
-      { amount, merchant_display: merchant, category, txn_date, is_reimbursable: reimb });
+    const ok = await sbUpdate('transactions', id, { amount, merchant_display: merchant, category, txn_date, is_reimbursable: reimb });
     if (ok === null) return;
     toast('Expense updated');
   } else {
@@ -2111,8 +2110,7 @@ async function saveExpense() {
     });
     if (res === null) return;
     if (reimb && res?.[0]) {
-      await sbInsert('household_reimbursements',
-        { txn_id: res[0].id, amount, description: merchant, status: 'pending' });
+      await sbInsert('household_reimbursements', { txn_id: res[0].id, amount, description: merchant, status: 'pending' });
     }
     toast('Expense saved');
   }
@@ -2130,11 +2128,10 @@ async function deleteExpense() {
 }
 
 async function saveDebt() {
-  const name = $('debt-name').value.trim();
+  const name   = $('debt-name').value.trim();
   const amount = parseFloat($('debt-amount').value);
-  if (!name) { toast('Who owes you?', true); return; }
-  if (!(amount > 0)) { toast('Enter an amount above zero', true); return; }
-
+  if (!name)           { toast('Who owes you?', true); return; }
+  if (!(amount > 0))   { toast('Enter an amount above zero', true); return; }
   const found = await sbGet('people', `name=ilike.${encodeURIComponent(name)}&limit=1`);
   const upi = $('debt-upi').value.trim();
   let personId = found?.[0]?.id;
@@ -2150,7 +2147,6 @@ async function saveDebt() {
     debt_date: date ? new Date(`${date}T12:00:00`).toISOString() : new Date().toISOString(),
     status: 'pending'
   }) === null) return;
-
   closeModal('m-debt');
   ['debt-name','debt-amount','debt-reason','debt-upi'].forEach(k => $(k).value = '');
   toast(`${name} owes ₹${inr(amount)}`);
@@ -2158,10 +2154,10 @@ async function saveDebt() {
 }
 
 async function saveInvestment() {
-  const name = $('inv-name').value.trim();
+  const name  = $('inv-name').value.trim();
   const units = parseFloat($('inv-units').value);
   const price = parseFloat($('inv-price').value);
-  if (!name) { toast('Name the holding', true); return; }
+  if (!name)                    { toast('Name the holding', true); return; }
   if (!(units > 0) || !(price > 0)) { toast('Units and price must be greater than zero', true); return; }
   const invested = +(units * price).toFixed(2);
   if (await sbInsert('investments', {
@@ -2177,17 +2173,15 @@ async function saveInvestment() {
 
 async function saveReceived() {
   const amount = parseFloat($('rcv-amount').value);
-  const from = $('rcv-from').value.trim();
-  const date = $('rcv-date').value;
+  const from   = $('rcv-from').value.trim();
+  const date   = $('rcv-date').value;
   if (!(amount > 0)) { toast('Enter amount above zero', true); return; }
-  if (!from) { toast('Add description or payer', true); return; }
-  if (!date) { toast('Select a date', true); return; }
+  if (!from)         { toast('Add description or payer', true); return; }
+  if (!date)         { toast('Select a date', true); return; }
   if (await sbInsert('transactions', {
-    type: 'credit', amount,
-    merchant_raw: from, merchant_display: from,
+    type: 'credit', amount, merchant_raw: from, merchant_display: from,
     category: $('rcv-category').value,
-    txn_date: new Date(`${date}T12:00:00`).toISOString(),
-    sms_raw: 'manual_entry'
+    txn_date: new Date(`${date}T12:00:00`).toISOString(), sms_raw: 'manual_entry'
   }) === null) return;
   closeModal('m-received');
   ['rcv-amount','rcv-from'].forEach(k => $(k).value = '');
@@ -2222,13 +2216,11 @@ async function saveHousehold() {
 
 async function settleDebt(id) {
   if (await sbUpdate('debts', id, { status: 'settled', settled_date: new Date().toISOString() }) === null) return;
-  toast('Settled');
-  loadPeople(); loadHome();
+  toast('Settled'); loadPeople(); loadHome();
 }
 async function settleHousehold(id) {
   if (await sbUpdate('household_reimbursements', id, { status: 'settled', settled_date: new Date().toISOString() }) === null) return;
-  toast('Settled');
-  loadPeople();
+  toast('Settled'); loadPeople();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2251,24 +2243,20 @@ Reply with ONLY a valid JSON object matching:
 {"amount":<number>,"merchant":"<short name>","category":"<one category>","date":"YYYY-MM-DD","reimbursable":false}`, 300, true);
     const p = parseJSON(raw);
     if (!p || !(Number(p.amount) > 0)) { note.textContent = 'Could not parse amount — try adding manually.'; return; }
-
     openAddExpense();
-    $('exp-amount').value = Number(p.amount);
+    $('exp-amount').value   = Number(p.amount);
     $('exp-merchant').value = p.merchant || text;
-    $('exp-date').value = /^\d{4}-\d{2}-\d{2}$/.test(p.date) ? p.date : ymd(new Date());
+    $('exp-date').value     = /^\d{4}-\d{2}-\d{2}$/.test(p.date) ? p.date : ymd(new Date());
     $('exp-category').value = CATS.includes(p.category) ? p.category : 'Other';
-    $('exp-reimb').checked = !!p.reimbursable;
+    $('exp-reimb').checked  = !!p.reimbursable;
     $('exp-title').textContent = 'Review & confirm';
     const box = $('parsed');
     box.style.display = 'block';
     box.innerHTML = [['Amount', '₹' + inr(p.amount)], ['Merchant', p.merchant || text],
                      ['Category', $('exp-category').value], ['Date', $('exp-date').value]]
       .map(([k, v]) => `<div class="parsed-row"><span class="k">${esc(k)}</span><span class="num">${esc(v)}</span></div>`).join('');
-    $('nl-input').value = '';
-    note.textContent = '';
-  } finally {
-    btn.disabled = false; btn.textContent = 'Add';
-  }
+    $('nl-input').value = ''; note.textContent = '';
+  } finally { btn.disabled = false; btn.textContent = 'Add'; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2289,42 +2277,29 @@ async function testGeminiKey() {
   const key = ($('gm-key').value || GM_KEY).trim();
   if (!key) { toast('Enter a Gemini key first', true); return; }
   const btn = $('btn-test-gemini');
-  btn.disabled = true;
-  btn.textContent = 'Testing connection…';
-  
-  // Temporarily set GM_KEY to test value
-  const original = GM_KEY;
-  GM_KEY = key;
+  btn.disabled = true; btn.textContent = 'Testing connection…';
+  const original = GM_KEY; GM_KEY = key;
   try {
     const res = await gemini('Reply with only the word: READY', 20);
-    if (res && res.toLowerCase().includes('ready')) {
-      toast('✓ Gemini API connected successfully!');
-    } else if (res) {
-      toast('✓ Gemini key is active!');
-    }
-  } finally {
-    GM_KEY = original;
-    btn.disabled = false;
-    btn.textContent = 'Test API Key';
-  }
+    if (res && res.toLowerCase().includes('ready')) toast('✓ Gemini API connected successfully!');
+    else if (res) toast('✓ Gemini key is active!');
+  } finally { GM_KEY = original; btn.disabled = false; btn.textContent = 'Test API Key'; }
 }
 
 function saveGemini() {
   GM_KEY = $('gm-key').value.trim();
   localStorage.setItem('gemini_key', GM_KEY);
-  closeModal('m-gemini');
-  syncStatus();
+  closeModal('m-gemini'); syncStatus();
   toast(GM_KEY ? 'Gemini API key saved' : 'Key removed');
   if (GM_KEY) loadInsight(true);
 }
 function clearGemini() {
   GM_KEY = ''; localStorage.removeItem('gemini_key'); $('gm-key').value = '';
-  $('ai-card').style.display = 'none';
-  syncStatus(); toast('Key removed');
+  $('ai-card').style.display = 'none'; syncStatus(); toast('Key removed');
 }
 
 function saveCoindcx() {
-  const key = $('cx-key').value.trim();
+  const key    = $('cx-key').value.trim();
   const secret = $('cx-secret').value.trim();
   if (!key || !secret) { toast('Enter both API key and secret', true); return; }
   CX_KEY = key; CX_SECRET = secret;
@@ -2359,39 +2334,39 @@ function clearSupabase() {
    GLOBAL EVENT ROUTER
    ═══════════════════════════════════════════════════════════════ */
 const ACTIONS = {
-  tab:           el => switchTab(el.dataset.tab),
-  month:         el => shiftMonth(Number(el.dataset.delta)),
-  'pick-month':  () => openMonthPicker(),
-  'pick-year':   el => shiftPickerYear(Number(el.dataset.delta)),
-  'set-month':   el => { view.year = pickerYear; view.month = Number(el.dataset.m);
-                         closeModal('m-month'); syncMonthLabels();
-                         const a = document.querySelector('.screen.active')?.id.replace('screen-','');
-                         if (a === 'home') loadHome(); if (a === 'expenses') loadExpenses(); },
-  close:         el => closeModal(el.dataset.modal),
-  'toggle-row':  el => el.classList.toggle('open'),
-  'add-expense': () => openAddExpense(),
-  'edit-expense':el => openEditExpense(el.dataset.id),
-  'ask-delete':  el => openDeleteExpense(el.dataset.id),
-  'save-expense':() => saveExpense(),
-  'delete-expense': () => deleteExpense(),
-  filter:        el => { catFilter = el.dataset.cat; loadExpenses(); },
-  'add-debt':    () => { $('debt-date').value = ymd(new Date()); openModal('m-debt'); },
-  'save-debt':   () => saveDebt(),
-  'ask-settle':  el => { document.querySelectorAll('.confirm').forEach(c => c.classList.remove('show'));
-                         $('settle-' + el.dataset.id)?.classList.add('show'); },
+  tab:             el => switchTab(el.dataset.tab),
+  month:           el => shiftMonth(Number(el.dataset.delta)),
+  'pick-month':    () => openMonthPicker(),
+  'pick-year':     el => shiftPickerYear(Number(el.dataset.delta)),
+  'set-month':     el => { view.year = pickerYear; view.month = Number(el.dataset.m);
+                           closeModal('m-month'); syncMonthLabels();
+                           const a = document.querySelector('.screen.active')?.id.replace('screen-','');
+                           if (a === 'home') loadHome(); if (a === 'expenses') loadExpenses(); },
+  close:           el => closeModal(el.dataset.modal),
+  'toggle-row':    el => el.classList.toggle('open'),
+  'add-expense':   () => openAddExpense(),
+  'edit-expense':  el => openEditExpense(el.dataset.id),
+  'ask-delete':    el => openDeleteExpense(el.dataset.id),
+  'save-expense':  () => saveExpense(),
+  'delete-expense':() => deleteExpense(),
+  filter:          el => { catFilter = el.dataset.cat; loadExpenses(); },
+  'add-debt':      () => { $('debt-date').value = ymd(new Date()); openModal('m-debt'); },
+  'save-debt':     () => saveDebt(),
+  'ask-settle':    el => { document.querySelectorAll('.confirm').forEach(c => c.classList.remove('show'));
+                           $('settle-' + el.dataset.id)?.classList.add('show'); },
   'cancel-settle': el => $('settle-' + el.dataset.id)?.classList.remove('show'),
-  settle:        el => settleDebt(el.dataset.id),
+  settle:          el => settleDebt(el.dataset.id),
   'confirm-match': el => confirmMatch(el.dataset.debt, el.dataset.credit),
   'dismiss-match': el => dismissMatch(el.dataset.debt, el.dataset.credit),
   'settle-household': el => settleHousehold(el.dataset.id),
   'add-household': () => openModal('m-household'),
-  'save-household': () => saveHousehold(),
+  'save-household':() => saveHousehold(),
   'add-received':  () => { $('rcv-date').value = ymd(new Date()); openModal('m-received'); },
   'save-received': () => saveReceived(),
   'add-income':    () => openModal('m-income'),
   'save-income':   () => saveIncomeSource(),
   'add-investment':() => openModal('m-investment'),
-  'save-investment': () => saveInvestment(),
+  'save-investment':() => saveInvestment(),
   'refresh-prices':() => estimatePrices(),
   'toggle-lt':     () => $('lt-body').classList.toggle('open'),
   'nl-parse':      () => parseNL(),
@@ -2427,6 +2402,9 @@ document.addEventListener('keydown', e => {
 
 $('search').addEventListener('input', renderExpenseRows);
 $('nl-input').addEventListener('keydown', e => { if (e.key === 'Enter') parseNL(); });
+
+// Re-check chip overflow on window resize
+window.addEventListener('resize', updateChipsOverflow);
 
 /* ═══════════════════════════════════════════════════════════════
    INIT & BOOTSTRAP
