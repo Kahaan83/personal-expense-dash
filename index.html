@@ -836,7 +836,7 @@ input, select, textarea { font: inherit; color: inherit; }
       <button data-act="tab" data-tab="expenses">See all <span class="material-symbols-rounded" style="font-size:16px;">arrow_forward</span></button>
     </div>
     <div class="rows" id="recent-rows">
-      <div id="recent-skeleton">${skeletonRows(4)}</div>
+      <div id="recent-skeleton"></div>
     </div>
 
     <div class="sec">
@@ -874,7 +874,7 @@ input, select, textarea { font: inherit; color: inherit; }
     </div>
     <div class="rows" id="expense-rows">
       <!-- skeleton shown until data loads -->
-      <div id="expense-skeleton">${skeletonRows(6)}</div>
+      <div id="expense-skeleton"></div>
     </div>
   </section>
 
@@ -908,7 +908,7 @@ input, select, textarea { font: inherit; color: inherit; }
       </span>
     </div>
     <div class="rows" id="holding-rows">
-      <div id="holding-skeleton">${skeletonRows(3)}</div>
+      <div id="holding-skeleton"></div>
     </div>
 
     <div class="fold" id="lt-fold" style="display:none">
@@ -938,7 +938,7 @@ input, select, textarea { font: inherit; color: inherit; }
       <span class="v num" id="owed-total">₹0</span>
     </div>
     <div class="rows" id="debt-rows">
-      <div id="debt-skeleton">${skeletonRows(2)}</div>
+      <div id="debt-skeleton"></div>
     </div>
 
     <div class="sec">
@@ -1319,7 +1319,7 @@ async function sb(path, { method = 'GET', body, prefer } = {}) {
     return text ? JSON.parse(text) : [];
   } catch (err) {
     console.error(err);
-    toast('Can't reach Supabase — check network', true);
+    toast("Can't reach Supabase — check network", true);
     return null;
   }
 }
@@ -1359,7 +1359,7 @@ async function gemini(prompt, maxTokens = 600, jsonMode = false) {
       if (output) return output;
     } catch (err) { lastErrMsg = err.message; }
   }
-  toast(lastErrMsg ? `Gemini: ${lastErrMsg}` : 'Couldn't reach Gemini API', true);
+  toast(lastErrMsg ? `Gemini: ${lastErrMsg}` : "Couldn't reach Gemini API", true);
   return null;
 }
 
@@ -1816,7 +1816,7 @@ async function estimatePrices() {
 ${holdings.map(h => `- ${h.name} (${h.type}${h.ticker ? ', ' + h.ticker : ''})`).join('\n')}
 Reply with only a JSON array: [{"name":"<exact name as given>","price_per_unit":<number>}]`, 700, true);
     const list = parseJSON(raw);
-    if (!Array.isArray(list)) { toast('Couldn't parse price estimates', true); return; }
+    if (!Array.isArray(list)) { toast("Couldn't parse price estimates", true); return; }
     const byName = new Map(list
       .filter(p => p && typeof p.name === 'string' && Number(p.price_per_unit) > 0)
       .map(p => [p.name.trim().toLowerCase(), Number(p.price_per_unit)]));
@@ -1956,11 +1956,11 @@ async function loadPeople() {
   $('debt-rows').innerHTML = skeletonRows(2);
 
   const now = new Date();
-  const twoMonthsAgo = ymd(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+  const previousMonthStart = ymd(new Date(now.getFullYear(), now.getMonth() - 1, 1));
   const [debts, household, recentCredits, incomeSources] = await Promise.all([
     sbGet('debts', 'status=neq.settled&select=id,amount,amount_settled,reason,debt_date,people(name)&order=debt_date.desc'),
     sbGet('household_reimbursements', 'status=eq.pending&order=created_at.desc'),
-    sbGet('transactions', `type=eq.credit&txn_date=gte.${twoMonthsAgo}&order=txn_date.desc&limit=20`),
+    sbGet('transactions', `type=eq.credit&txn_date=gte.${previousMonthStart}&order=txn_date.desc&limit=20`),
     sbGet('income_sources', 'is_active=eq.true&order=name.asc')
   ]);
   renderMatches(computeMatches(debts, recentCredits, incomeSources));
@@ -2102,6 +2102,28 @@ async function saveExpense() {
   if (id) {
     const ok = await sbUpdate('transactions', id, { amount, merchant_display: merchant, category, txn_date, is_reimbursable: reimb });
     if (ok === null) return;
+
+    // Keep the linked pending reimbursement in sync with the expense.
+    // Settled reimbursements are intentionally left untouched.
+    const linked = await sbGet('household_reimbursements', `txn_id=eq.${encodeURIComponent(id)}&status=eq.pending&limit=1`);
+    const pending = linked?.[0];
+    if (reimb) {
+      if (pending) {
+        await sbUpdate('household_reimbursements', pending.id, {
+          amount,
+          description: merchant
+        });
+      } else {
+        await sbInsert('household_reimbursements', {
+          txn_id: id,
+          amount,
+          description: merchant,
+          status: 'pending'
+        });
+      }
+    } else if (pending) {
+      await sbDelete('household_reimbursements', pending.id);
+    }
     toast('Expense updated');
   } else {
     const res = await sbInsert('transactions', {
@@ -2121,6 +2143,11 @@ async function saveExpense() {
 async function deleteExpense() {
   const id = $('exp-id').value;
   if (!id) return;
+  const linked = await sbGet('household_reimbursements', `txn_id=eq.${encodeURIComponent(id)}&status=eq.pending&limit=20`);
+  if (linked === null) return;
+  for (const reimbursement of linked) {
+    if (await sbDelete('household_reimbursements', reimbursement.id) === null) return;
+  }
   if (await sbDelete('transactions', id) === null) return;
   closeModal('m-expense');
   toast('Expense deleted');
