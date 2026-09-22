@@ -1308,7 +1308,7 @@ async function gemini(prompt, maxTokens = 600, jsonMode = false) {
   if (!key) return null;
 
   // Try current generation models in sequence
-  const candidateModels = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  const candidateModels = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-flash-latest', 'gemini-3-flash-preview'];
   let lastErrMsg = '';
 
   for (const model of candidateModels) {
