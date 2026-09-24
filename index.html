@@ -530,7 +530,32 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .uncat-nudge button { font-weight: 700; text-decoration: underline; flex: none; }
 
-/* ── Portfolio & Holdings ──────────────────────────────────── */
+/* ── Portfolio & Holdings (collapsible accordion) ──────────── */
+.pf-sec {
+  margin: 0 18px 10px;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-sheen);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--md-sys-color-surface-container-low);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+}
+.pf-sec-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  width: 100%; padding: 15px 18px; text-align: left;
+  background: var(--md-sys-color-surface-container-high); cursor: pointer;
+}
+.pf-sec-head:hover { background: var(--md-sys-color-surface-container-highest); }
+.pf-sec-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.pf-sec-title .n { color: var(--md-sys-color-on-surface-variant); font-weight: 600; font-size: 11.5px; }
+.pf-chev { color: var(--md-sys-color-primary); font-size: 20px !important; transition: transform 0.2s var(--ease-m3); }
+.pf-sec-head[aria-expanded="false"] .pf-chev { transform: rotate(-90deg); }
+.pf-sec-val { font-size: 13px; font-weight: 600; color: var(--md-sys-color-on-surface-variant); flex: none; }
+.pf-sec-body { display: none; padding: 12px 12px 12px; background: var(--md-sys-color-surface-container-low); }
+.pf-sec-body.open { display: block; }
+.pf-sec .holding:last-child { margin-bottom: 0; }
+/* legacy non-collapsible group (kept for fallback) */
 .holding-group { margin-bottom: 4px; }
 .holding-group-head {
   display: flex; justify-content: space-between; align-items: baseline;
@@ -1822,14 +1847,37 @@ async function loadPortfolio() {
   } else fold.style.display = 'none';
 }
 
-/* Groups a list of holdings by asset type — funds are kept separate from
-   stocks (and crypto/other) with a small labelled sub-header per group,
-   each showing that group's current value. */
+/* Accordion state — only one portfolio section visible at a time.
+   Persisted so the choice survives reloads. Separate keys for
+   active holdings vs long-term holds (nested inside lt-fold). */
+let pfOpenGroup = localStorage.getItem('pf_open_group') || 'mutual_fund';
+let ltOpenGroup = localStorage.getItem('lt_open_group') || 'mutual_fund';
+
+function togglePfGroup(group, containerId) {
+  const isLt = containerId === 'lt-rows';
+  const cur = isLt ? ltOpenGroup : pfOpenGroup;
+  // Accordion: clicking the open section collapses it (none visible);
+  // clicking a closed section opens it and closes the other one.
+  const next = cur === group ? '' : group;
+  if (isLt) { ltOpenGroup = next; localStorage.setItem('lt_open_group', next); }
+  else { pfOpenGroup = next; localStorage.setItem('pf_open_group', next); }
+  const active = cache.holdings.filter(i => i.mode !== 'long_term_hold');
+  const longTerm = cache.holdings.filter(i => i.mode === 'long_term_hold');
+  if (containerId === 'lt-rows') renderHoldingGroups(longTerm, false, 'lt-rows', '');
+  else renderHoldingGroups(active, true, 'holding-rows',
+    `<div class="empty"><div class="e">₹</div><div class="t">Import your Groww statement or add a holding.</div></div>`);
+}
+
+/* Groups a list of holdings by asset type — Mutual Funds and Stocks
+   (plus Crypto / Other when present) render as collapsible accordion
+   sections so only one group is visible at a time. */
 const HOLDING_GROUP_ORDER  = ['mutual_fund', 'stock', 'crypto', 'other'];
 const HOLDING_GROUP_LABELS = { mutual_fund: 'Mutual Funds', stock: 'Stocks', crypto: 'Crypto', other: 'Other' };
 
 function renderHoldingGroups(list, showPnl, containerId, emptyHtml) {
   if (!list.length) { $(containerId).innerHTML = emptyHtml; return; }
+  const isLt = containerId === 'lt-rows';
+  const openGroup = isLt ? ltOpenGroup : pfOpenGroup;
   const curOf = i => Number(i.current_value != null ? i.current_value : i.invested_amount);
   const groups = {};
   list.forEach(i => {
@@ -1837,18 +1885,23 @@ function renderHoldingGroups(list, showPnl, containerId, emptyHtml) {
     (groups[k] ||= []).push(i);
   });
   const biggest = Math.max(...list.map(curOf), 1);
-  $(containerId).innerHTML = HOLDING_GROUP_ORDER
-    .filter(k => groups[k] && groups[k].length)
+  const present = HOLDING_GROUP_ORDER.filter(k => groups[k] && groups[k].length);
+  // If saved group isn't present (e.g. only stocks exist), open the first one.
+  const effectiveOpen = openGroup === '' ? '' : (present.includes(openGroup) ? openGroup : present[0]);
+  $(containerId).innerHTML = present
     .map(k => {
       const items = groups[k];
       const groupValue = items.reduce((s, i) => s + curOf(i), 0);
+      const open = effectiveOpen === k;
       return `
-      <div class="holding-group">
-        <div class="holding-group-head">
-          <span>${esc(HOLDING_GROUP_LABELS[k])}<span class="n">${items.length} holding${items.length === 1 ? '' : 's'}</span></span>
-          <span class="num">₹${inr(groupValue)}</span>
+      <div class="pf-sec" data-group="${k}">
+        <button class="pf-sec-head" data-act="toggle-pf" data-group="${k}" data-container="${containerId}" aria-expanded="${open}">
+          <span class="pf-sec-title"><span class="material-symbols-rounded pf-chev">expand_more</span>${esc(HOLDING_GROUP_LABELS[k])}<span class="n">${items.length} holding${items.length === 1 ? '' : 's'}</span></span>
+          <span class="pf-sec-val num">₹${inr(groupValue)}</span>
+        </button>
+        <div class="pf-sec-body${open ? ' open' : ''}">
+          ${items.map(i => holdingRow(i, showPnl, biggest)).join('')}
         </div>
-        ${items.map(i => holdingRow(i, showPnl, biggest)).join('')}
       </div>`;
     }).join('');
 }
@@ -2467,6 +2520,7 @@ const ACTIONS = {
   'save-investment':() => saveInvestment(),
   'refresh-prices':() => estimatePrices(),
   'toggle-lt':     () => $('lt-body').classList.toggle('open'),
+  'toggle-pf':     el => togglePfGroup(el.dataset.group, el.dataset.container || 'holding-rows'),
   'nl-parse':      () => parseNL(),
   'ai-refresh':    () => loadInsight(true),
   'open-supabase': () => { $('sb-url').value = SB_URL; $('sb-key').value = SB_KEY; openModal('m-supabase'); },
