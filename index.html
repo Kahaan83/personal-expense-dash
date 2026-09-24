@@ -567,12 +567,17 @@ input, select, textarea { font: inherit; color: inherit; }
 .holding-group:first-child .holding-group-head { padding-top: 4px; }
 .holding-group-head .n { color: var(--md-sys-color-on-surface-variant); font-weight: 600; text-transform: none; letter-spacing: 0; font-size: 11.5px; margin-left: 6px; }
 .holding {
+  position: relative;
   padding: 16px; margin-bottom: 8px;
   background: var(--md-sys-color-surface-container);
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-sheen);
   border-radius: var(--r-md);
+  overflow: hidden;
 }
+.holding.tappable { cursor: pointer; }
+.holding.tappable:hover { background: var(--md-sys-color-surface-container-high); }
+.h-est { font-size: 10.5px; color: var(--md-sys-color-warn); font-weight: 700; }
 .h-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
 .h-name { font-size: 15px; font-weight: 600; line-height: 1.4; }
 .h-badge {
@@ -587,7 +592,37 @@ input, select, textarea { font: inherit; color: inherit; }
 .h-cur { font-size: 16px; font-weight: 700; }
 .h-pnl { font-size: 12.5px; font-weight: 600; margin-top: 3px; }
 .alloc { height: 4px; border-radius: var(--r-full); background: var(--md-sys-color-surface-container-highest); margin-top: 12px; overflow: hidden; }
-.alloc i { display: block; height: 100%; background: var(--md-sys-color-primary); border-radius: var(--r-full); }
+.h-acts {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  display: flex; align-items: center; gap: 6px; padding: 0 12px 0 28px;
+  background: linear-gradient(90deg, transparent 0%, var(--md-sys-color-surface-container-highest) 35%);
+  transform: translateX(105%);
+  transition: transform 0.22s var(--ease-m3);
+}
+.holding.open .h-acts { transform: translateX(0); }
+.h-acts button {
+  width: 36px; height: 36px; border-radius: var(--r-full);
+  display: grid; place-items: center;
+  background: var(--md-sys-color-surface-container-highest);
+  border: 1px solid var(--glass-border);
+  color: var(--md-sys-color-on-surface);
+  transition: background 0.15s;
+}
+.h-acts button:hover { background: var(--md-sys-color-primary-container); color: var(--md-sys-color-on-primary-container); }
+.h-acts button.del { color: var(--md-sys-color-debit); }
+.h-acts button.del:hover { background: var(--md-sys-color-debit-container); color: var(--md-sys-color-on-debit-container); }
+
+.load-more {
+  display: flex; align-items: center; justify-content: center;
+  margin: 14px auto 6px; padding: 9px 18px;
+  border-radius: var(--r-full);
+  font-size: 13px; font-weight: 700;
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-sheen);
+  color: var(--md-sys-color-on-surface);
+}
+.load-more:disabled { opacity: 0.45; }
 
 .fold { margin: 14px 18px 0; border: 1px solid var(--glass-border); box-shadow: var(--glass-sheen); border-radius: var(--r-lg); overflow: hidden; }
 .fold-head {
@@ -970,6 +1005,7 @@ input, select, textarea { font: inherit; color: inherit; }
       <span style="display:flex;gap:10px">
         <button data-act="sync-coindcx" id="btn-coindcx">Sync CoinDCX</button>
         <button data-act="refresh-prices" id="btn-prices">Estimate prices</button>
+        <button data-act="save-prices" id="btn-save-prices" style="display:none">Save estimates</button>
       </span>
     </div>
     <div class="rows" id="holding-rows">
@@ -1142,8 +1178,8 @@ input, select, textarea { font: inherit; color: inherit; }
 
 <div class="overlay" id="m-investment"><div class="sheet">
   <div class="sheet-handle"></div>
-  <div class="sheet-title"><span>Add holding</span><button data-act="close" data-modal="m-investment"><span class="material-symbols-rounded">close</span></button></div>
-  <div class="field"><label for="inv-name">Name</label><input id="inv-name" type="text" placeholder="Kotak Mid Cap Fund Direct Growth" /></div>
+  <div class="sheet-title"><span id="inv-title">Add holding</span><button data-act="close" data-modal="m-investment"><span class="material-symbols-rounded">close</span></button></div>
+  <div class="field"><label for="inv-name">Name</label><input id="inv-name" type="text" placeholder="Kotak Mid Cap Fund Direct Growth" autocomplete="off" /></div>
   <div class="pair">
     <div class="field"><label for="inv-type">Type</label><select id="inv-type">
       <option value="mutual_fund">Mutual fund</option><option value="stock">Stock</option><option value="crypto">Crypto</option>
@@ -1160,7 +1196,9 @@ input, select, textarea { font: inherit; color: inherit; }
   <div class="field"><label for="inv-mode">Mode</label><select id="inv-mode">
     <option value="active">Active — show P&amp;L</option><option value="long_term_hold">Long-term — hide P&amp;L</option>
   </select></div>
-  <button class="btn" data-act="save-investment">Save</button>
+  <input type="hidden" id="inv-id" />
+  <button class="btn" data-act="save-investment" id="inv-save">Save</button>
+  <button class="btn btn-danger" id="inv-delete" style="display:none" data-act="delete-holding">Delete holding</button>
 </div></div>
 
 <div class="overlay" id="m-received"><div class="sheet">
@@ -1305,8 +1343,19 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g,
   c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const monthRange = (y, m) => [ymd(new Date(y, m, 1)), ymd(new Date(y, m + 1, 1))];
+function dOnly(y, m, da) {
+  return `${y}-${String(m + 1).padStart(2,'0')}-${String(da).padStart(2,'0')}`;
+}
+function dateOnly(d) {
+  if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  const dt = d instanceof Date ? d : new Date(d);
+  if (isNaN(dt)) { const now = new Date(); return dOnly(now.getFullYear(), now.getMonth(), now.getDate()); }
+  return dOnly(dt.getFullYear(), dt.getMonth(), dt.getDate());
+}
+const ymd = dateOnly;
+const monthRangeISO = (y, m) => [dOnly(y, m, 1), dOnly(y, m + 1, 1)];
+const EXP_PAGE_SIZE = 60;
+const INV_PAGE_SIZE = 60;
 
 function parseDate(v) {
   if (!v) return new Date(NaN);
@@ -1542,6 +1591,8 @@ function groupByDay(list) {
   return [...groups.entries()].sort((a, b) => b[0].localeCompare(a[0]));
 }
 
+const errState = msg => `<div class="empty"><div class="e"><span class="material-symbols-rounded">cloud_off</span></div><div class="t">${msg || 'Could not load — check your connection.'}</div></div>`;
+
 /* ═══════════════════════════════════════════════════════════════
    HOME
    ═══════════════════════════════════════════════════════════════ */
@@ -1553,14 +1604,33 @@ async function loadHome() {
   // Show skeletons immediately while fetching
   $('recent-rows').innerHTML = skeletonRows(4);
 
-  const [start, end] = monthRange(view.year, view.month);
+  const [start, end] = monthRangeISO(view.year, view.month);
   const [txns, debts] = await Promise.all([
-    sbGet('transactions', `txn_date=gte.${start}&txn_date=lt.${end}&order=txn_date.desc&limit=1000`),
+    sbGet('transactions', `txn_date=gte.${start}&txn_date=lt.${end}&order=txn_date.desc&limit=${EXP_PAGE_SIZE}`),
     sbGet('debts', 'status=neq.settled&select=amount,amount_settled')
   ]);
-  if (token !== loadToken || !txns) return;
+  if (token !== loadToken) return;
+  if (!txns) { $('recent-rows').innerHTML = errState('Could not load transactions.'); return; }
   cache.month = txns;
+  cache.monthHasMore = txns.length >= EXP_PAGE_SIZE;
+  cache.monthPage = 1;
 
+  const owed = (debts || []).reduce((s, d) => s + Number(d.amount) - Number(d.amount_settled || 0), 0);
+  $('stat-owed').textContent = '₹' + inr(owed);
+
+  renderHomeStats();
+  await renderHeroDelta();
+  renderRibbon();
+  renderHomeRecent();
+  renderBreakdown();
+  if (GM_KEY) loadInsight(false);
+  else $('ai-card').style.display = 'none';
+}
+
+/* Derived home stats alone, so "load more" can refresh the hero
+   numbers/chart/breakdown once the next page is fetched. */
+function renderHomeStats() {
+  const txns = cache.month;
   const debits   = txns.filter(t => t.type === 'debit' && t.category !== 'Investment');
   const invested = txns.filter(t => t.category === 'Investment' && t.type === 'debit');
   const credits  = txns.filter(t => t.type === 'credit');
@@ -1573,28 +1643,41 @@ async function loadHome() {
   const netEl = $('stat-net');
   netEl.textContent = (net < 0 ? '−₹' : '₹') + inr(Math.abs(net));
   netEl.className = 'stat-v num ' + (net >= 0 ? 'pos' : 'neg');
+}
 
-  const owed = (debts || []).reduce((s, d) => s + Number(d.amount) - Number(d.amount_settled || 0), 0);
-  $('stat-owed').textContent = '₹' + inr(owed);
-
-  await renderHeroDelta(spent, invested);
-  renderRibbon(txns, debits);
-
-  const recentAll = [...txns].sort((a, b) => String(b.txn_date).localeCompare(String(a.txn_date)));
-  $('recent-rows').innerHTML = recentAll.length
-    ? recentAll.slice(0, 6).map(t => txnRow(t)).join('')
+function renderHomeRecent() {
+  const txns = [...cache.month].sort((a, b) => String(b.txn_date).localeCompare(String(a.txn_date)));
+  const more = cache.monthHasMore
+    ? `<button class="load-more" data-act="load-more-month">Load more transactions</button>` : '';
+  $('recent-rows').innerHTML = txns.length
+    ? txns.slice(0, 6).map(t => txnRow(t)).join('') + more
     : `<div class="empty"><div class="e">₹</div><div class="t">Nothing here yet — type an expense above or tap <strong style="color:var(--md-sys-color-primary)">+</strong> to add one.</div></div>`;
+}
 
-  renderBreakdown(debits, spent);
-  if (GM_KEY) loadInsight(false);
-  else $('ai-card').style.display = 'none';
+async function loadMoreMonth() {
+  const [start, end] = monthRangeISO(view.year, view.month);
+  const offset = (cache.monthPage || 1) * EXP_PAGE_SIZE;
+  const more = await sbGet('transactions',
+    `txn_date=gte.${start}&txn_date=lt.${end}&order=txn_date.desc&limit=${EXP_PAGE_SIZE}&offset=${offset}`);
+  if (!more) return;
+  const seen = new Set(cache.month.map(t => String(t.id)));
+  cache.month = [...cache.month, ...more.filter(t => !seen.has(String(t.id)))];
+  cache.monthPage++;
+  cache.monthHasMore = more.length >= EXP_PAGE_SIZE;
+  renderHomeStats();
+  renderRibbon();
+  renderHomeRecent();
+  renderBreakdown();
 }
 
 async function renderHeroDelta(spent, invested) {
+  const txns = cache.month;
+  spent    = spent ?? txns.filter(t => t.type === 'debit' && t.category !== 'Investment').reduce((s, t) => s + Number(t.amount), 0);
+  invested = invested ?? txns.filter(t => t.category === 'Investment' && t.type === 'debit');
   const prev = new Date(view.year, view.month - 1, 1);
-  const [pStart, pEnd] = monthRange(prev.getFullYear(), prev.getMonth());
+  const [pStart, pEnd] = monthRangeISO(prev.getFullYear(), prev.getMonth());
   const prevTxns = await sbGet('transactions',
-    `txn_date=gte.${pStart}&txn_date=lt.${pEnd}&type=eq.debit&select=amount,category&limit=1000`);
+    `txn_date=gte.${pStart}&txn_date=lt.${pEnd}&type=eq.debit&select=amount,category&limit=2000`);
   const prevSpent = (prevTxns || [])
     .filter(t => t.category !== 'Investment')
     .reduce((s, t) => s + Number(t.amount), 0);
@@ -1621,6 +1704,8 @@ async function renderHeroDelta(spent, invested) {
    Bars still show per-day spend volume underneath.
    ═══════════════════════════════════════════════════════════════ */
 function renderRibbon(all, debits) {
+  all    = all    || cache.month;
+  debits = debits || all.filter(t => t.type === 'debit' && t.category !== 'Investment');
   const days = new Date(view.year, view.month + 1, 0).getDate();
   const W = 400, H = 96, padY = 10, barH = 20;
   const chartBottom = H - 4;           // bottom of drawable area
@@ -1677,6 +1762,8 @@ function renderRibbon(all, debits) {
 
 function renderBreakdown(debits, total) {
   const el = $('breakdown');
+  debits = debits || cache.month.filter(t => t.type === 'debit' && t.category !== 'Investment');
+  total  = total ?? debits.reduce((s, t) => s + Number(t.amount), 0);
   if (!debits.length || total <= 0) {
     el.innerHTML = `<div class="empty"><div class="t">Log a few expenses to view category breakdown.</div></div>`;
     return;
@@ -1715,9 +1802,9 @@ async function loadInsight(force) {
   const totals = {};
   debits.forEach(t => { const c = t.category || 'Other'; totals[c] = Math.round((totals[c] || 0) + Number(t.amount)); });
   const prev = new Date(view.year, view.month - 1, 1);
-  const [pStart, pEnd] = monthRange(prev.getFullYear(), prev.getMonth());
+  const [pStart, pEnd] = monthRangeISO(prev.getFullYear(), prev.getMonth());
   const prevTxns = await sbGet('transactions',
-    `txn_date=gte.${pStart}&txn_date=lt.${pEnd}&type=eq.debit&select=amount,category&limit=1000`);
+    `txn_date=gte.${pStart}&txn_date=lt.${pEnd}&type=eq.debit&select=amount,category&limit=2000`);
   const prevTotals = {};
   (prevTxns || []).forEach(t => { const c = t.category || 'Other'; prevTotals[c] = Math.round((prevTotals[c] || 0) + Number(t.amount)); });
   const top = [...debits].sort((a, b) => b.amount - a.amount).slice(0, 5)
@@ -1747,11 +1834,14 @@ async function loadExpenses() {
   // Show skeletons immediately
   $('expense-rows').innerHTML = skeletonRows(6);
 
-  const [start, end] = monthRange(view.year, view.month);
-  const txns = await sbGet('transactions',
-    `txn_date=gte.${start}&txn_date=lt.${end}&type=eq.debit&order=txn_date.desc&limit=1000`);
-  if (token !== loadToken || !txns) return;
+  const [start, end] = monthRangeISO(view.year, view.month);
+  const q = `txn_date=gte.${start}&txn_date=lt.${end}&type=eq.debit&order=txn_date.desc&limit=${EXP_PAGE_SIZE}`;
+  const txns = await sbGet('transactions', q);
+  if (token !== loadToken) return;
+  if (!txns) { $('expense-rows').innerHTML = errState('Could not load expenses.'); return; }
   cache.expenses = txns;
+  cache.expHasMore = txns.length >= EXP_PAGE_SIZE;
+  cache.expPage = 1;
 
   const used = [...new Set(txns.map(t => t.category || 'Other'))]
     .sort((a, b) => CATS.indexOf(a) - CATS.indexOf(b));
@@ -1800,7 +1890,22 @@ function renderExpenseRows() {
     const sum = items.reduce((s, t) => s + Number(t.amount), 0);
     return `<div class="daybar"><span>${d.getDate()} ${MONTHS[d.getMonth()]}</span>
       <span class="num">₹${inr(sum)}</span></div>${items.map(t => txnRow(t, true)).join('')}`;
-  }).join('');
+  }).join('') +
+  (cache.expHasMore
+    ? `<button class="load-more" data-act="load-more-exp">Load more expenses</button>` : '');
+}
+
+async function loadMoreExpenses() {
+  const [start, end] = monthRangeISO(view.year, view.month);
+  const offset = (cache.expPage || 1) * EXP_PAGE_SIZE;
+  const more = await sbGet('transactions',
+    `txn_date=gte.${start}&txn_date=lt.${end}&type=eq.debit&order=txn_date.desc&limit=${EXP_PAGE_SIZE}&offset=${offset}`);
+  if (!more) return;
+  const seen = new Set(cache.expenses.map(t => String(t.id)));
+  cache.expenses = [...cache.expenses, ...more.filter(t => !seen.has(String(t.id)))];
+  cache.expPage++;
+  cache.expHasMore = more.length >= EXP_PAGE_SIZE;
+  renderExpenseRows();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1811,30 +1916,17 @@ async function loadPortfolio() {
 
   // Show skeletons
   $('holding-rows').innerHTML = skeletonRows(3);
+  $('btn-save-prices').style.display = 'none';
 
-  const invs = await sbGet('investments', 'order=invested_amount.desc');
-  if (!invs) return;
+  const invs = await sbGet('investments', `order=invested_amount.desc&limit=${INV_PAGE_SIZE}`);
+  if (!invs) { $('holding-rows').innerHTML = errState('Could not load your portfolio.'); return; }
   cache.holdings = invs;
+  cache.invHasMore = invs.length >= INV_PAGE_SIZE;
+  cache.invPage = 1;
   const active   = invs.filter(i => i.mode !== 'long_term_hold');
   const longTerm = invs.filter(i => i.mode === 'long_term_hold');
-  const cur = i => Number(i.current_value != null ? i.current_value : i.invested_amount);
-  const invested = active.reduce((s, i) => s + Number(i.invested_amount), 0);
-  const value    = active.reduce((s, i) => s + cur(i), 0);
-  const pnl = value - invested;
-  const pct = invested > 0 ? (pnl / invested * 100) : 0;
 
-  $('pf-value').textContent = inr(value);
-  $('pf-invested').textContent = '₹' + inr(invested);
-  $('pf-count').textContent = String(invs.length);
-  const delta = $('pf-delta');
-  delta.innerHTML = active.length
-    ? `<span class="${pnl >= 0 ? 'pos' : 'neg'}">${pnl >= 0 ? '+' : '−'}₹${inr2(Math.abs(pnl))} · ${pnl >= 0 ? '+' : '−'}${Math.abs(pct).toFixed(2)}%</span> unrealised`
-    : '&nbsp;';
-
-  const best = active.map(i => ({ n: i.name, p: Number(i.invested_amount) > 0 ? (cur(i) - i.invested_amount) / i.invested_amount * 100 : 0 }))
-    .sort((a, b) => b.p - a.p)[0];
-  $('pf-best').innerHTML = best
-    ? `<span class="${best.p >= 0 ? 'pos' : 'neg'}">${best.p >= 0 ? '+' : ''}${best.p.toFixed(1)}%</span>` : '—';
+  renderPortfolioStats();
 
   renderHoldingGroups(active, true, 'holding-rows',
     `<div class="empty"><div class="e">₹</div><div class="t">Import your Groww statement or add a holding.</div></div>`);
@@ -1845,6 +1937,29 @@ async function loadPortfolio() {
     $('lt-sum').textContent = '₹' + inr(longTerm.reduce((s, i) => s + Number(i.invested_amount), 0));
     renderHoldingGroups(longTerm, false, 'lt-rows', '');
   } else fold.style.display = 'none';
+}
+
+function renderPortfolioStats() {
+  const all     = cache.holdings;
+  const active  = all.filter(i => i.mode !== 'long_term_hold');
+  const cur = i => Number(i.current_value != null ? i.current_value : i.invested_amount);
+  const invested = active.reduce((s, i) => s + Number(i.invested_amount), 0);
+  const value    = active.reduce((s, i) => s + cur(i), 0);
+  const pnl = value - invested;
+  const pct = invested > 0 ? (pnl / invested * 100) : 0;
+
+  $('pf-value').textContent = inr(value);
+  $('pf-invested').textContent = '₹' + inr(invested);
+  $('pf-count').textContent = String(all.length);
+  const delta = $('pf-delta');
+  delta.innerHTML = active.length
+    ? `<span class="${pnl >= 0 ? 'pos' : 'neg'}">${pnl >= 0 ? '+' : '−'}₹${inr2(Math.abs(pnl))} · ${pnl >= 0 ? '+' : '−'}${Math.abs(pct).toFixed(2)}%</span> unrealised`
+    : '&nbsp;';
+
+  const best = active.map(i => ({ n: i.name, p: Number(i.invested_amount) > 0 ? (cur(i) - i.invested_amount) / i.invested_amount * 100 : 0 }))
+    .sort((a, b) => b.p - a.p)[0];
+  $('pf-best').innerHTML = best
+    ? `<span class="${best.p >= 0 ? 'pos' : 'neg'}">${best.p >= 0 ? '+' : ''}${best.p.toFixed(1)}%</span>` : '—';
 }
 
 /* Accordion state — only one portfolio section visible at a time.
@@ -1888,22 +2003,26 @@ function renderHoldingGroups(list, showPnl, containerId, emptyHtml) {
   const present = HOLDING_GROUP_ORDER.filter(k => groups[k] && groups[k].length);
   // If saved group isn't present (e.g. only stocks exist), open the first one.
   const effectiveOpen = openGroup === '' ? '' : (present.includes(openGroup) ? openGroup : present[0]);
+  const totalValue = present.reduce((s, k) => s + groups[k].reduce((a, i) => a + curOf(i), 0), 0);
   $(containerId).innerHTML = present
     .map(k => {
       const items = groups[k];
       const groupValue = items.reduce((s, i) => s + curOf(i), 0);
+      const alloc = totalValue ? Math.round(groupValue / totalValue * 100) : 0;
       const open = effectiveOpen === k;
       return `
       <div class="pf-sec" data-group="${k}">
         <button class="pf-sec-head" data-act="toggle-pf" data-group="${k}" data-container="${containerId}" aria-expanded="${open}">
           <span class="pf-sec-title"><span class="material-symbols-rounded pf-chev">expand_more</span>${esc(HOLDING_GROUP_LABELS[k])}<span class="n">${items.length} holding${items.length === 1 ? '' : 's'}</span></span>
-          <span class="pf-sec-val num">₹${inr(groupValue)}</span>
+          <span class="pf-sec-val num">${alloc}% · ₹${inr(groupValue)}</span>
         </button>
         <div class="pf-sec-body${open ? ' open' : ''}">
           ${items.map(i => holdingRow(i, showPnl, biggest)).join('')}
         </div>
       </div>`;
-    }).join('');
+    }).join('') +
+    (containerId === 'holding-rows' && cache.invHasMore
+      ? `<button class="load-more" data-act="load-more-inv">Load more holdings</button>` : '');
 }
 
 function holdingRow(i, showPnl, biggest) {
@@ -1912,8 +2031,12 @@ function holdingRow(i, showPnl, biggest) {
   const pnl = current - invested;
   const pct = invested > 0 ? (pnl / invested * 100) : 0;
   const label = { mutual_fund: 'Fund', stock: 'Stock', crypto: 'Crypto' }[i.type] || 'Other';
+  const actions = showPnl ? `<div class="h-acts">
+      <button data-act="edit-holding" data-id="${esc(i.id)}" aria-label="Edit"><span class="material-symbols-rounded">edit</span></button>
+      <button class="del" data-act="ask-del-holding" data-id="${esc(i.id)}" aria-label="Delete"><span class="material-symbols-rounded">delete</span></button>
+    </div>` : '';
   return `
-  <div class="holding">
+  <div class="holding${showPnl ? ' tappable' : ''}" data-row="${esc(i.id)}" data-act="toggle-row">
     <div class="h-top">
       <div class="h-name">${esc(i.name)}</div>
       <div class="h-badge">${esc(label)} · ${esc(i.source || 'manual')}</div>
@@ -1921,11 +2044,12 @@ function holdingRow(i, showPnl, biggest) {
     <div class="h-nums">
       <div>
         <div class="h-inv num">${Number(i.units).toFixed(3)} units · ₹${inr2(invested)} in</div>
-        ${showPnl ? `<div class="h-pnl num ${pnl >= 0 ? 'pos' : 'neg'}">${pnl >= 0 ? '+' : '−'}₹${inr2(Math.abs(pnl))} · ${pnl >= 0 ? '+' : '−'}${Math.abs(pct).toFixed(2)}%</div>` : ''}
+        ${showPnl ? `<div class="h-pnl num ${pnl >= 0 ? 'pos' : 'neg'}">${pnl >= 0 ? '+' : '−'}₹${inr2(Math.abs(pnl))} · ${pnl >= 0 ? '+' : '−'}${Math.abs(pct).toFixed(2)}%${i.estimated ? ' <span class="h-est">est.</span>' : ''}</div>` : ''}
       </div>
       ${showPnl ? `<div class="h-cur num">${i.estimated ? '~' : ''}₹${inr2(current)}</div>` : ''}
     </div>
     ${showPnl ? `<div class="alloc"><i style="width:${Math.max(3, current / biggest * 100).toFixed(1)}%"></i></div>` : ''}
+    ${actions}
   </div>`;
 }
 
@@ -1953,9 +2077,51 @@ Reply with only a JSON array: [{"name":"<exact name as given>","price_per_unit":
       h.estimated = true; n++;
     }
     if (!n) { toast('No holdings matched estimates', true); return; }
-    toast(`${n} holding price${n === 1 ? '' : 's'} estimated (not saved)`);
+    estimatedIds = new Set(holdings.filter(h => h.estimated).map(h => String(h.id)));
+    $('btn-save-prices').style.display = 'inline-flex';
+    toast(`${n} holding price${n === 1 ? '' : 's'} estimated — tap "Save estimates" to keep them`);
     renderHoldingGroups(holdings, true, 'holding-rows', '');
   } finally { btn.textContent = 'Estimate prices'; btn.disabled = false; }
+}
+
+/* Holdings just estimated (ids) — cleared after a save. */
+let estimatedIds = new Set();
+
+async function saveEstimates() {
+  if (!estimatedIds.size) { toast('Nothing estimated yet — run Estimate prices first'); return; }
+  let n = 0;
+  for (const h of cache.holdings) {
+    if (!estimatedIds.has(String(h.id))) continue;
+    const ok = await sbUpdate('investments', h.id, { current_value: h.current_value });
+    if (ok === null) { toast('Save failed — check connection', true); return; }
+    h.estimated = false; n++;
+  }
+  estimatedIds = new Set();
+  $('btn-save-prices').style.display = 'none';
+  toast(`Saved ${n} price estimate${n === 1 ? '' : 's'}`);
+  renderHoldingGroups(cache.holdings.filter(i => i.mode !== 'long_term_hold'), true, 'holding-rows',
+    `<div class="empty"><div class="e">₹</div><div class="t">Import your Groww statement or add a holding.</div></div>`);
+}
+
+async function loadMoreInvestments() {
+  const offset = (cache.invPage || 1) * INV_PAGE_SIZE;
+  const more = await sbGet('investments', `order=invested_amount.desc&limit=${INV_PAGE_SIZE}&offset=${offset}`);
+  if (!more) return;
+  const seen = new Set(cache.holdings.map(i => String(i.id)));
+  cache.holdings = [...cache.holdings, ...more.filter(i => !seen.has(String(i.id)))];
+  cache.invPage++;
+  cache.invHasMore = more.length >= INV_PAGE_SIZE;
+  renderPortfolioStats();
+  const active   = cache.holdings.filter(i => i.mode !== 'long_term_hold');
+  const longTerm = cache.holdings.filter(i => i.mode === 'long_term_hold');
+  renderHoldingGroups(active, true, 'holding-rows',
+    `<div class="empty"><div class="e">₹</div><div class="t">Import your Groww statement or add a holding.</div></div>`);
+  const fold = $('lt-fold');
+  if (longTerm.length) {
+    fold.style.display = 'block';
+    $('lt-sum').textContent = '₹' + inr(longTerm.reduce((s, i) => s + Number(i.invested_amount), 0));
+    renderHoldingGroups(longTerm, false, 'lt-rows', '');
+  } else fold.style.display = 'none';
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2163,7 +2329,11 @@ async function loadPeople() {
 /* ═══════════════════════════════════════════════════════════════
    MODAL CONTROLS
    ═══════════════════════════════════════════════════════════════ */
-function openModal(id) { $(id).classList.add('open'); }
+function openModal(id) {
+  $(id).classList.add('open');
+  const first = $(id).querySelector('input:not([type="hidden"]):not([type="checkbox"]), select, textarea');
+  if (first) setTimeout(() => first.focus({ preventScroll: true }), 120);
+}
 function closeModal(id) { $(id).classList.remove('open'); if (id === 'm-expense') resetExpenseSheet(); }
 
 function resetExpenseSheet() {
@@ -2221,7 +2391,7 @@ async function saveExpense() {
   if (!merchant)     { toast('Add a merchant description', true); return; }
   if (!date)         { toast('Select a date', true); return; }
   if (GM_KEY && category === 'Other') category = (await aiCategorise(merchant)) || 'Other';
-  const txn_date = new Date(`${date}T12:00:00`).toISOString();
+  const txn_date = dateOnly(date);
   if (remember) await rememberMerchant(merchant, category);
   if (id) {
     const ok = await sbUpdate('transactions', id, { amount, merchant_display: merchant, category, txn_date, is_reimbursable: reimb });
@@ -2295,13 +2465,57 @@ async function saveDebt() {
   const date = $('debt-date').value;
   if (await sbInsert('debts', {
     person_id: personId, amount, reason: $('debt-reason').value.trim() || null,
-    debt_date: date ? new Date(`${date}T12:00:00`).toISOString() : new Date().toISOString(),
+    debt_date: date ? dateOnly(date) : dateOnly(new Date()),
     status: 'pending'
   }) === null) return;
   closeModal('m-debt');
   ['debt-name','debt-amount','debt-reason','debt-upi'].forEach(k => $(k).value = '');
   toast(`${name} owes ₹${inr(amount)}`);
   loadPeople();
+}
+
+function resetInvestmentSheet() {
+  $('inv-title').textContent = 'Add holding';
+  $('inv-id').value = '';
+  $('inv-save').style.display = 'flex';
+  $('inv-delete').style.display = 'none';
+  $('inv-name').value = '';
+  $('inv-units').value = '';
+  $('inv-price').value = '';
+  $('inv-ticker').value = '';
+  $('inv-type').value = 'mutual_fund';
+  $('inv-source').value = 'groww';
+  $('inv-mode').value = 'active';
+}
+
+function openAddInvestment() {
+  resetInvestmentSheet();
+  openModal('m-investment');
+  setTimeout(() => $('inv-name').focus(), 120);
+}
+
+function openEditHolding(id) {
+  const h = cache.holdings.find(x => String(x.id) === String(id));
+  if (!h) return;
+  resetInvestmentSheet();
+  $('inv-title').textContent = 'Edit holding';
+  $('inv-id').value = h.id;
+  $('inv-name').value = h.name || '';
+  $('inv-type').value = ['mutual_fund','stock','crypto'].includes(h.type) ? h.type : 'mutual_fund';
+  $('inv-source').value = ['groww','coindcx','manual'].includes(h.source) ? h.source : 'groww';
+  $('inv-units').value = h.units;
+  $('inv-price').value = h.avg_buy_price || (Number(h.invested_amount) / (Number(h.units) || 1)).toFixed(2);
+  $('inv-ticker').value = h.ticker || '';
+  $('inv-mode').value = h.mode === 'long_term_hold' ? 'long_term_hold' : 'active';
+  $('inv-delete').style.display = 'flex';
+  openModal('m-investment');
+  setTimeout(() => $('inv-name').focus(), 120);
+}
+
+function openDeleteHolding(id) {
+  openEditHolding(id);
+  $('inv-title').textContent = 'Delete holding?';
+  $('inv-save').style.display = 'none';
 }
 
 async function saveInvestment() {
@@ -2311,14 +2525,35 @@ async function saveInvestment() {
   if (!name)                    { toast('Name the holding', true); return; }
   if (!(units > 0) || !(price > 0)) { toast('Units and price must be greater than zero', true); return; }
   const invested = +(units * price).toFixed(2);
-  if (await sbInsert('investments', {
+  const id = $('inv-id').value;
+  const prev = id ? cache.holdings.find(x => String(x.id) === String(id)) : null;
+  const keepCurrent = prev && Number(prev.units) === units &&
+    Number(prev.avg_buy_price || (Number(prev.invested_amount) / (Number(prev.units) || 1))) === price;
+  const body = {
     name, type: $('inv-type').value, source: $('inv-source').value,
-    units, avg_buy_price: price, invested_amount: invested, current_value: invested,
-    ticker: $('inv-ticker').value.trim() || null, mode: $('inv-mode').value
-  }) === null) return;
+    units, avg_buy_price: price, invested_amount: invested,
+    ticker: $('inv-ticker').value.trim() || null, mode: $('inv-mode').value,
+    current_value: keepCurrent && prev.current_value != null ? prev.current_value : invested
+  };
+  if (id) {
+    if (await sbUpdate('investments', id, body) === null) return;
+    toast('Holding updated');
+  } else {
+    if (await sbInsert('investments', body) === null) return;
+    toast('Holding added');
+  }
   closeModal('m-investment');
-  ['inv-name','inv-units','inv-price','inv-ticker'].forEach(k => $(k).value = '');
-  toast('Holding added');
+  resetInvestmentSheet();
+  loadPortfolio();
+}
+
+async function deleteHolding() {
+  const id = $('inv-id').value;
+  if (!id) return;
+  if (await sbDelete('investments', id) === null) return;
+  closeModal('m-investment');
+  resetInvestmentSheet();
+  toast('Holding deleted');
   loadPortfolio();
 }
 
@@ -2332,7 +2567,7 @@ async function saveReceived() {
   if (await sbInsert('transactions', {
     type: 'credit', amount, merchant_raw: from, merchant_display: from,
     category: $('rcv-category').value,
-    txn_date: new Date(`${date}T12:00:00`).toISOString(), sms_raw: 'manual_entry'
+    txn_date: dateOnly(date), sms_raw: 'manual_entry'
   }) === null) return;
   closeModal('m-received');
   ['rcv-amount','rcv-from'].forEach(k => $(k).value = '');
@@ -2516,9 +2751,16 @@ const ACTIONS = {
   'save-received': () => saveReceived(),
   'add-income':    () => openModal('m-income'),
   'save-income':   () => saveIncomeSource(),
-  'add-investment':() => openModal('m-investment'),
+  'add-investment':() => openAddInvestment(),
   'save-investment':() => saveInvestment(),
+  'edit-holding':  el => openEditHolding(el.dataset.id),
+  'ask-del-holding': el => openDeleteHolding(el.dataset.id),
+  'delete-holding':() => deleteHolding(),
   'refresh-prices':() => estimatePrices(),
+  'save-prices':   () => saveEstimates(),
+  'load-more-month':() => loadMoreMonth(),
+  'load-more-exp': () => loadMoreExpenses(),
+  'load-more-inv': () => loadMoreInvestments(),
   'toggle-lt':     () => $('lt-body').classList.toggle('open'),
   'toggle-pf':     el => togglePfGroup(el.dataset.group, el.dataset.container || 'holding-rows'),
   'nl-parse':      () => parseNL(),
@@ -2548,8 +2790,23 @@ document.querySelectorAll('.overlay').forEach(o =>
   o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); }));
 
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape') return;
-  document.querySelectorAll('.overlay.open').forEach(o => closeModal(o.id));
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.overlay.open').forEach(o => closeModal(o.id));
+    return;
+  }
+  // Enter-to-save inside a sheet: trigger the primary submit button.
+  if (e.key === 'Enter') {
+    const overlay = document.querySelector('.overlay.open');
+    if (!overlay) return;
+    const tag = e.target.tagName;
+    if (tag === 'TEXTAREA' || tag === 'BUTTON') return;
+    if (tag === 'INPUT' || tag === 'SELECT') {
+      const save = [...overlay.querySelectorAll('.btn:not(.btn-ghost):not(.btn-tonal):not(.btn-danger)')]
+        .find(b => b.offsetParent !== null);
+      // Only auto-submit when the focused control is inside this sheet
+      if (save && overlay.contains(e.target)) { e.preventDefault(); save.click(); }
+    }
+  }
 });
 
 $('search').addEventListener('input', renderExpenseRows);
