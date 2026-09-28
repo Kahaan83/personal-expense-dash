@@ -125,8 +125,6 @@ input, select, textarea { font: inherit; color: inherit; }
   border-right: 1px solid rgba(255,255,255,0.04);
 }
 
-/* Liquid glass surfaces: blurred, translucent, softly bordered panels
-   that let the colored background blobs show through. */
 .ribbon, .ai, .row, .skel-row, .breakdown, .holding, .set-card, .fold,
 .match-row, .confirm, .owed-bar, .sheet, .quick-input-wrap, .search input,
 .chip, .toast, .nav, .monthpick, .field input, .field select, .danger-note,
@@ -225,7 +223,6 @@ input, select, textarea { font: inherit; color: inherit; }
 .ribbon-amount .rs { font-size: 24px; color: var(--md-sys-color-primary); margin-right: 2px; }
 .ribbon-delta { font-size: 13px; font-weight: 500; margin-top: 8px; color: var(--md-sys-color-on-surface-variant); line-height: 1.5; }
 .ribbon-chart { display: block; width: 100%; height: 88px; margin-top: 6px; }
-/* Cumulative spend line styling (replaces balance line) */
 .ribbon-chart path.cum-line {
   fill: none;
   stroke: var(--md-sys-color-primary);
@@ -234,7 +231,6 @@ input, select, textarea { font: inherit; color: inherit; }
   stroke-linejoin: round;
   filter: drop-shadow(0 2px 6px rgba(124,232,179,0.4));
 }
-/* Fill area under cumulative spend */
 .ribbon-chart path.cum-fill {
   fill: url(#spendGradient);
   opacity: 0.35;
@@ -396,11 +392,6 @@ input, select, textarea { font: inherit; color: inherit; }
 .row-acts button.del { color: var(--md-sys-color-debit); }
 .row-acts button.del:hover { background: var(--md-sys-color-debit-container); color: var(--md-sys-color-on-debit-container); }
 
-/* ═══════════════════════════════════════════════════════════════
-   SKELETON LOADER SYSTEM
-   Pulsing placeholder rows — shown during async fetch, swapped
-   out when data lands. Three widths give visual variety.
-   ═══════════════════════════════════════════════════════════════ */
 @keyframes shimmer {
   0%   { background-position: -400px 0; }
   100% { background-position:  400px 0; }
@@ -422,7 +413,6 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .skel-icon {
   width: 42px; height: 42px; border-radius: 14px; flex: none;
-  /* inherits .skel shimmer */
 }
 .skel-lines { flex: 1; display: flex; flex-direction: column; gap: 7px; }
 .skel-line { height: 11px; }
@@ -433,8 +423,6 @@ input, select, textarea { font: inherit; color: inherit; }
 .skel-amt { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none; }
 .skel-amt-main { width: 52px; height: 13px; }
 .skel-amt-sub  { width: 36px; height: 9px; }
-
-/* Skeleton hero stats */
 .skel-stat { height: 18px; width: 70%; }
 .skel-hero-amt { height: 40px; width: 55%; margin-top: 4px; }
 
@@ -476,10 +464,6 @@ input, select, textarea { font: inherit; color: inherit; }
 .search input:focus { border-color: var(--md-sys-color-primary); outline: none; }
 .search .ic { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--md-sys-color-outline); }
 
-/* ─── CHIPS: scroll fade affordance ───────────────────────
-   A mask-image gradient on the right edge signals "more to
-   see" when the chip list overflows, without any extra chrome.
-   ────────────────────────────────────────────────────────── */
 .chips-wrap {
   position: relative;
   margin-top: 10px;
@@ -491,8 +475,6 @@ input, select, textarea { font: inherit; color: inherit; }
   width: 48px;
   background: linear-gradient(to right, transparent, var(--md-sys-color-surface) 90%);
   pointer-events: none;
-  /* Only show the fade when chips are actually overflowing;
-     JS adds .has-overflow on the wrapper */
   opacity: 0;
   transition: opacity 0.2s;
 }
@@ -530,7 +512,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .uncat-nudge button { font-weight: 700; text-decoration: underline; flex: none; }
 
-/* ── Portfolio & Holdings (collapsible accordion) ──────────── */
+/* ── Portfolio & Holdings ──────────────────────────────────── */
 .pf-sec {
   margin: 0 18px 10px;
   border: 1px solid var(--glass-border);
@@ -555,7 +537,6 @@ input, select, textarea { font: inherit; color: inherit; }
 .pf-sec-body { display: none; padding: 12px 12px 12px; background: var(--md-sys-color-surface-container-low); }
 .pf-sec-body.open { display: block; }
 .pf-sec .holding:last-child { margin-bottom: 0; }
-/* legacy non-collapsible group (kept for fallback) */
 .holding-group { margin-bottom: 4px; }
 .holding-group-head {
   display: flex; justify-content: space-between; align-items: baseline;
@@ -966,14 +947,12 @@ input, select, textarea { font: inherit; color: inherit; }
         <span class="material-symbols-rounded ic">search</span>
         <input id="search" placeholder="Search merchant, note or category" autocomplete="off" />
       </div>
-      <!-- chips-wrap gets has-overflow class from JS when chips scroll -->
       <div class="chips-wrap" id="chips-wrap">
         <div class="chips" id="chips"></div>
       </div>
       <div id="uncat-hint"></div>
     </div>
     <div class="rows" id="expense-rows">
-      <!-- skeleton shown until data loads -->
       <div id="expense-skeleton"></div>
     </div>
   </section>
@@ -1011,9 +990,6 @@ input, select, textarea { font: inherit; color: inherit; }
     <div class="rows" id="holding-rows">
       <div id="holding-skeleton"></div>
     </div>
-    <!-- holding-rows is populated by JS as grouped sections:
-         Mutual Funds, Stocks, Crypto, Other — see renderHoldingGroups() -->
-
 
     <div class="fold" id="lt-fold" style="display:none">
       <div class="fold-head" data-act="toggle-lt">
@@ -1286,12 +1262,6 @@ input, select, textarea { font: inherit; color: inherit; }
 <script>
 'use strict';
 
-/* ═══════════════════════════════════════════════════════════════
-   SKELETON HELPER — called at HTML-parse time via template literal
-   (the ${skeletonRows(n)} in the static HTML above is resolved
-   by the inline function defined here; we re-declare it at runtime
-   for dynamic use)
-   ═══════════════════════════════════════════════════════════════ */
 function skeletonRows(n, widths) {
   const pairs = widths || [['w-60','w-40'],['w-75','w-30'],['w-60','w-40'],['w-75','w-30']];
   return Array.from({ length: n }, (_, i) => {
@@ -1332,7 +1302,7 @@ const catColor = c => getComputedStyle(document.documentElement)
 
 const view = { month: new Date().getMonth(), year: new Date().getFullYear() };
 let pickerYear = view.year;
-const cache = { expenses: [], month: [], holdings: [] };
+const cache = { expenses: [], month: [], holdings: [], settledReimb: 0 };
 let catFilter = 'all';
 let loadToken = 0;
 
@@ -1393,18 +1363,12 @@ function toast(msg, bad = false) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   CHIPS OVERFLOW DETECTION
-   Adds .has-overflow to .chips-wrap when the inner .chips
-   element actually overflows, triggering the fade mask.
-   ═══════════════════════════════════════════════════════════════ */
 function updateChipsOverflow() {
   const wrap = $('chips-wrap');
   const inner = $('chips');
   if (!wrap || !inner) return;
   const overflows = inner.scrollWidth > inner.clientWidth + 1;
   wrap.classList.toggle('has-overflow', overflows);
-  // Re-check on scroll so fade disappears when user reaches the end
   inner.onscroll = () => {
     const atEnd = inner.scrollLeft + inner.clientWidth >= inner.scrollWidth - 4;
     wrap.classList.toggle('has-overflow', !atEnd && inner.scrollWidth > inner.clientWidth + 1);
@@ -1601,25 +1565,36 @@ async function loadHome() {
   if (!SB_URL) return;
   const token = ++loadToken;
 
-  // Show skeletons immediately while fetching
   $('recent-rows').innerHTML = skeletonRows(4);
 
   const [start, end] = monthRangeISO(view.year, view.month);
-  const [txns, debts] = await Promise.all([
+
+  // ── CHANGED: fetch settled reimbursements in parallel ──────────────────────
+  const [txns, debts, settledReimb] = await Promise.all([
     sbGet('transactions', `txn_date=gte.${start}&txn_date=lt.${end}&order=txn_date.desc&limit=${EXP_PAGE_SIZE}`),
-    sbGet('debts', 'status=neq.settled&select=amount,amount_settled')
+    sbGet('debts', 'status=neq.settled&select=amount,amount_settled'),
+    sbGet('household_reimbursements', `status=eq.settled&settled_date=gte.${start}&settled_date=lt.${end}&select=amount`)
   ]);
+
   if (token !== loadToken) return;
   if (!txns) { $('recent-rows').innerHTML = errState('Could not load transactions.'); return; }
   cache.month = txns;
   cache.monthHasMore = txns.length >= EXP_PAGE_SIZE;
   cache.monthPage = 1;
+  // ── CHANGED: cache settled reimbursement total for this month ──────────────
+  cache.settledReimb = (settledReimb || []).reduce((s, r) => s + Number(r.amount), 0);
 
   const owed = (debts || []).reduce((s, d) => s + Number(d.amount) - Number(d.amount_settled || 0), 0);
   $('stat-owed').textContent = '₹' + inr(owed);
 
   renderHomeStats();
-  await renderHeroDelta();
+
+  // ── CHANGED: pass net figure into renderHeroDelta ──────────────────────────
+  const _allDebits = cache.month
+    .filter(t => t.type === 'debit' && t.category !== 'Investment')
+    .reduce((s, t) => s + Number(t.amount), 0);
+  await renderHeroDelta(Math.max(0, _allDebits - (cache.settledReimb || 0)));
+
   renderRibbon();
   renderHomeRecent();
   renderBreakdown();
@@ -1627,8 +1602,6 @@ async function loadHome() {
   else $('ai-card').style.display = 'none';
 }
 
-/* Derived home stats alone, so "load more" can refresh the hero
-   numbers/chart/breakdown once the next page is fetched. */
 function renderHomeStats() {
   const txns = cache.month;
   const debits   = txns.filter(t => t.type === 'debit' && t.category !== 'Investment');
@@ -1638,7 +1611,24 @@ function renderHomeStats() {
   const income   = credits.reduce((s, t) => s + Number(t.amount), 0);
   const net      = income - spent - invested.reduce((s, t) => s + Number(t.amount), 0);
 
-  $('hero-spent').textContent = inr(spent);
+  // ── CHANGED: hero shows net-of-reimbursements; label flips; subtitle added ─
+  const reimbursed = cache.settledReimb || 0;
+  const netSpent = Math.max(0, spent - reimbursed);
+  $('hero-spent').textContent = inr(netSpent);
+  document.querySelector('.ribbon-label').textContent =
+    reimbursed > 0 ? 'Out of pocket' : 'Spent this month';
+  let subtitleEl = document.getElementById('hero-total-out');
+  if (!subtitleEl) {
+    subtitleEl = document.createElement('div');
+    subtitleEl.id = 'hero-total-out';
+    subtitleEl.style.cssText =
+      'font-size:12px;font-weight:500;color:var(--md-sys-color-outline);'
+      + 'margin-top:3px;font-family:"DM Mono",monospace;';
+    document.querySelector('.ribbon-amount').after(subtitleEl);
+  }
+  subtitleEl.textContent = reimbursed > 0
+    ? `Total out ₹${inr(spent)} · ₹${inr(reimbursed)} reimbursed` : '';
+
   $('stat-in').textContent = '₹' + inr(income);
   const netEl = $('stat-net');
   netEl.textContent = (net < 0 ? '−₹' : '₹') + inr(Math.abs(net));
@@ -1670,10 +1660,14 @@ async function loadMoreMonth() {
   renderBreakdown();
 }
 
-async function renderHeroDelta(spent, invested) {
+// ── CHANGED: accepts netSpent (already reimbursement-adjusted) ─────────────
+async function renderHeroDelta(netSpent, invested) {
   const txns = cache.month;
-  spent    = spent ?? txns.filter(t => t.type === 'debit' && t.category !== 'Investment').reduce((s, t) => s + Number(t.amount), 0);
+  const spent = netSpent ?? Math.max(0,
+    txns.filter(t => t.type === 'debit' && t.category !== 'Investment')
+        .reduce((s, t) => s + Number(t.amount), 0) - (cache.settledReimb || 0));
   invested = invested ?? txns.filter(t => t.category === 'Investment' && t.type === 'debit');
+
   const prev = new Date(view.year, view.month - 1, 1);
   const [pStart, pEnd] = monthRangeISO(prev.getFullYear(), prev.getMonth());
   const prevTxns = await sbGet('transactions',
@@ -1695,30 +1689,21 @@ async function renderHeroDelta(spent, invested) {
 
 /* ═══════════════════════════════════════════════════════════════
    RIBBON CHART — Cumulative spend line
-   ─────────────────────────────────────────────────────────────
-   Instead of the account balance (erratic, credit+debit noise),
-   we plot the running total of debits through the month.
-   This gives a monotonically increasing curve that accurately
-   communicates "pace of spending" at a glance.
-
-   Bars still show per-day spend volume underneath.
    ═══════════════════════════════════════════════════════════════ */
 function renderRibbon(all, debits) {
   all    = all    || cache.month;
   debits = debits || all.filter(t => t.type === 'debit' && t.category !== 'Investment');
   const days = new Date(view.year, view.month + 1, 0).getDate();
   const W = 400, H = 96, padY = 10, barH = 20;
-  const chartBottom = H - 4;           // bottom of drawable area
-  const lineTop     = padY;            // topmost y the line can reach
+  const chartBottom = H - 4;
+  const lineTop     = padY;
 
-  // Per-day debit totals
   const perDay = new Array(days).fill(0);
   debits.forEach(t => {
     const i = parseDate(t.txn_date).getDate() - 1;
     if (i >= 0 && i < days) perDay[i] += Number(t.amount);
   });
 
-  // Cumulative spend (running sum)
   const cumulative = new Array(days).fill(0);
   let running = 0;
   for (let i = 0; i < days; i++) { running += perDay[i]; cumulative[i] = running; }
@@ -1727,26 +1712,21 @@ function renderRibbon(all, debits) {
   const maxSpend = Math.max(...perDay, 1);
   const step     = days > 1 ? W / (days - 1) : W;
 
-  // Draw per-day bars (small, near bottom)
   const bars = perDay.map((v, i) => {
     if (v <= 0) return '';
     const h = Math.max(2, (v / maxSpend) * barH);
     return `<rect class="bar" x="${(i * step).toFixed(1)}" y="${(chartBottom - h).toFixed(1)}" width="3" height="${h.toFixed(1)}" rx="1.5"/>`;
   }).join('');
 
-  // Cumulative spend line points
-  // y=lineTop when cumulative = maxCum, y=chartBottom when cumulative = 0
   const lineRange = chartBottom - lineTop - barH - 6;
   const toY = v => (chartBottom - barH - 6) - (v / maxCum) * lineRange;
   const pts = cumulative.map((v, i) => `${(i * step).toFixed(1)},${toY(v).toFixed(1)}`);
 
-  // Build closed fill path (line + drop to bottom)
   const firstX = 0, lastX = ((days - 1) * step).toFixed(1);
   const fillPath = `M ${pts.join(' L ')} L ${lastX},${chartBottom - barH - 4} L ${firstX},${chartBottom - barH - 4} Z`;
   const linePath = `M ${pts.join(' L ')}`;
 
   const svg = $('ribbon-svg');
-  // Preserve the defs block (gradient lives there)
   const defs = svg.querySelector('defs');
   svg.innerHTML = '';
   if (defs) svg.appendChild(defs);
@@ -1831,7 +1811,6 @@ async function loadExpenses() {
   if (!SB_URL) return;
   const token = ++loadToken;
 
-  // Show skeletons immediately
   $('expense-rows').innerHTML = skeletonRows(6);
 
   const [start, end] = monthRangeISO(view.year, view.month);
@@ -1856,7 +1835,6 @@ async function loadExpenses() {
         ${EMOJI[c] || '·'} ${esc(c)} (${n})</button>`;
     }).join('');
 
-  // Detect overflow after chips render
   requestAnimationFrame(updateChipsOverflow);
 
   const uncat = txns.filter(t => !t.category || t.category === 'Other').length;
@@ -1914,7 +1892,6 @@ async function loadMoreExpenses() {
 async function loadPortfolio() {
   if (!SB_URL) return;
 
-  // Show skeletons
   $('holding-rows').innerHTML = skeletonRows(3);
   $('btn-save-prices').style.display = 'none';
 
@@ -1962,17 +1939,12 @@ function renderPortfolioStats() {
     ? `<span class="${best.p >= 0 ? 'pos' : 'neg'}">${best.p >= 0 ? '+' : ''}${best.p.toFixed(1)}%</span>` : '—';
 }
 
-/* Accordion state — only one portfolio section visible at a time.
-   Persisted so the choice survives reloads. Separate keys for
-   active holdings vs long-term holds (nested inside lt-fold). */
 let pfOpenGroup = localStorage.getItem('pf_open_group') || 'mutual_fund';
 let ltOpenGroup = localStorage.getItem('lt_open_group') || 'mutual_fund';
 
 function togglePfGroup(group, containerId) {
   const isLt = containerId === 'lt-rows';
   const cur = isLt ? ltOpenGroup : pfOpenGroup;
-  // Accordion: clicking the open section collapses it (none visible);
-  // clicking a closed section opens it and closes the other one.
   const next = cur === group ? '' : group;
   if (isLt) { ltOpenGroup = next; localStorage.setItem('lt_open_group', next); }
   else { pfOpenGroup = next; localStorage.setItem('pf_open_group', next); }
@@ -1983,9 +1955,6 @@ function togglePfGroup(group, containerId) {
     `<div class="empty"><div class="e">₹</div><div class="t">Import your Groww statement or add a holding.</div></div>`);
 }
 
-/* Groups a list of holdings by asset type — Mutual Funds and Stocks
-   (plus Crypto / Other when present) render as collapsible accordion
-   sections so only one group is visible at a time. */
 const HOLDING_GROUP_ORDER  = ['mutual_fund', 'stock', 'crypto', 'other'];
 const HOLDING_GROUP_LABELS = { mutual_fund: 'Mutual Funds', stock: 'Stocks', crypto: 'Crypto', other: 'Other' };
 
@@ -2001,7 +1970,6 @@ function renderHoldingGroups(list, showPnl, containerId, emptyHtml) {
   });
   const biggest = Math.max(...list.map(curOf), 1);
   const present = HOLDING_GROUP_ORDER.filter(k => groups[k] && groups[k].length);
-  // If saved group isn't present (e.g. only stocks exist), open the first one.
   const effectiveOpen = openGroup === '' ? '' : (present.includes(openGroup) ? openGroup : present[0]);
   const totalValue = present.reduce((s, k) => s + groups[k].reduce((a, i) => a + curOf(i), 0), 0);
   $(containerId).innerHTML = present
@@ -2084,7 +2052,6 @@ Reply with only a JSON array: [{"name":"<exact name as given>","price_per_unit":
   } finally { btn.textContent = 'Estimate prices'; btn.disabled = false; }
 }
 
-/* Holdings just estimated (ids) — cleared after a save. */
 let estimatedIds = new Set();
 
 async function saveEstimates() {
@@ -2242,7 +2209,6 @@ async function syncCoindcx() {
 async function loadPeople() {
   if (!SB_URL) return;
 
-  // Show skeleton in debt section while loading
   $('debt-rows').innerHTML = skeletonRows(2);
 
   const now = new Date();
@@ -2397,23 +2363,13 @@ async function saveExpense() {
     const ok = await sbUpdate('transactions', id, { amount, merchant_display: merchant, category, txn_date, is_reimbursable: reimb });
     if (ok === null) return;
 
-    // Keep the linked pending reimbursement in sync with the expense.
-    // Settled reimbursements are intentionally left untouched.
     const linked = await sbGet('household_reimbursements', `txn_id=eq.${encodeURIComponent(id)}&status=eq.pending&limit=1`);
     const pending = linked?.[0];
     if (reimb) {
       if (pending) {
-        await sbUpdate('household_reimbursements', pending.id, {
-          amount,
-          description: merchant
-        });
+        await sbUpdate('household_reimbursements', pending.id, { amount, description: merchant });
       } else {
-        await sbInsert('household_reimbursements', {
-          txn_id: id,
-          amount,
-          description: merchant,
-          status: 'pending'
-        });
+        await sbInsert('household_reimbursements', { txn_id: id, amount, description: merchant, status: 'pending' });
       }
     } else if (pending) {
       await sbDelete('household_reimbursements', pending.id);
@@ -2794,7 +2750,6 @@ document.addEventListener('keydown', e => {
     document.querySelectorAll('.overlay.open').forEach(o => closeModal(o.id));
     return;
   }
-  // Enter-to-save inside a sheet: trigger the primary submit button.
   if (e.key === 'Enter') {
     const overlay = document.querySelector('.overlay.open');
     if (!overlay) return;
@@ -2803,7 +2758,6 @@ document.addEventListener('keydown', e => {
     if (tag === 'INPUT' || tag === 'SELECT') {
       const save = [...overlay.querySelectorAll('.btn:not(.btn-ghost):not(.btn-tonal):not(.btn-danger)')]
         .find(b => b.offsetParent !== null);
-      // Only auto-submit when the focused control is inside this sheet
       if (save && overlay.contains(e.target)) { e.preventDefault(); save.click(); }
     }
   }
@@ -2812,7 +2766,6 @@ document.addEventListener('keydown', e => {
 $('search').addEventListener('input', renderExpenseRows);
 $('nl-input').addEventListener('keydown', e => { if (e.key === 'Enter') parseNL(); });
 
-// Re-check chip overflow on window resize
 window.addEventListener('resize', updateChipsOverflow);
 
 /* ═══════════════════════════════════════════════════════════════
