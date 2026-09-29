@@ -842,6 +842,9 @@ input, select, textarea { font: inherit; color: inherit; }
   backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
 }
 body { background-attachment: scroll !important; }
+.toast.act { pointer-events: auto; display: flex; gap: 14px; align-items: center; }
+.snack-act { color: var(--md-sys-color-primary); font-weight: 700; min-height: 44px; padding: 0 8px; }
+.row[data-txn="1"] { touch-action: pan-y; will-change: transform; }
 /* touch + legibility */
 .monthpick button, .row .actions button, .mini, .match-row button { min-width: 44px; min-height: 44px; }
 .overlay .sheet { max-height: 90dvh; }
@@ -1353,8 +1356,17 @@ const isThisMonth = () => {
 };
 
 let toastTimer;
-function toast(msg, bad = false) {
+function snack(msg, label, fn, ms = 5000) {
   const t = $('toast');
+  t.classList.remove('bad'); t.textContent = '';
+  const m = document.createElement('span'); m.textContent = msg;
+  const b = document.createElement('button'); b.className = 'snack-act'; b.textContent = label;
+  b.onclick = () => { fn(); t.classList.remove('show', 'act'); };
+  t.append(m, b); t.classList.add('show', 'act');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show', 'act'), ms);
+}
+function toast(msg, bad = false) {
+  const t = $('toast'); t.classList.remove('act');
   t.textContent = msg;
   t.classList.toggle('bad', bad);
   t.classList.add('show');
@@ -1531,7 +1543,7 @@ function txnRow(t, actions = false) {
   const name = t.merchant_display || t.merchant_raw || 'Transfer';
   const sub = [fmtDateTime(t.txn_date), t.note].filter(Boolean).join(' · ');
   return `
-  <div class="row tappable" data-row="${esc(t.id)}" data-act="toggle-row">
+  <div class="row${debit ? ' tappable' : ''}" data-row="${esc(t.id)}" data-txn="${debit ? 1 : ''}"${debit ? ` data-act="edit-expense" data-id="${esc(t.id)}"` : ''}>
     <div class="chip-dot" style="background:${colour}26;color:${colour}">${EMOJI[cat] || '·'}</div>
     <div class="row-mid">
       <div class="row-name">${esc(name)}</div>
@@ -1541,7 +1553,7 @@ function txnRow(t, actions = false) {
       <div class="row-amt num ${debit ? '' : 'pos'}">${debit ? '−' : '+'}₹${inr(t.amount)}</div>
       ${t.balance_after != null ? `<div class="row-bal num">bal ${inr(t.balance_after)}</div>` : ''}
     </div>
-    ${actions ? `<div class="row-acts">
+    ${false ? `<div class="row-acts">
       <button data-act="edit-expense" data-id="${esc(t.id)}" aria-label="Edit"><span class="material-symbols-rounded">edit</span></button>
       <button class="del" data-act="ask-delete" data-id="${esc(t.id)}" aria-label="Delete"><span class="material-symbols-rounded">delete</span></button>
     </div>` : ''}
@@ -2294,14 +2306,14 @@ function openAddExpense() {
 }
 
 function openEditExpense(id) {
-  const t = cache.expenses.find(x => String(x.id) === String(id));
+  const t = cache.expenses.find(x => String(x.id) === String(id)) || cache.month.find(x => String(x.id) === String(id));
   if (!t) return;
   resetExpenseSheet();
   $('exp-title').textContent = 'Edit expense';
   $('exp-id').value = t.id;
-  $('exp-amount').value = t.amount;
+  $('exp-amount').value = t.amount_gross ?? t.amount;
   $('exp-merchant').value = t.merchant_display || t.merchant_raw || '';
-  $('exp-date').value = String(t.txn_date).slice(0, 10);
+  $('exp-date').value = dateOnly(t.txn_date); $('exp-date').dataset.orig = $('exp-date').value;
   $('exp-category').value = CATS.includes(t.category) ? t.category : 'Other';
   $('exp-reimb').checked = !!t.is_reimbursable;
   $('exp-delete').style.display = 'flex';
@@ -2337,7 +2349,7 @@ async function _saveExpense() {
   const txn_date = dateOnly(date);
   if (remember) await rememberMerchant(merchant, category);
   if (id) {
-    const ok = await sbUpdate('transactions', id, { amount, merchant_display: merchant, category, txn_date, is_reimbursable: reimb });
+    const ok = await sbUpdate('transactions', id, { amount, merchant_display: merchant, category, ...(date !== $('exp-date').dataset.orig ? { txn_date } : {}), is_reimbursable: reimb });
     if (ok === null) return;
 
     const linked = await sbGet('household_reimbursements', `txn_id=eq.${encodeURIComponent(id)}&status=eq.pending&limit=1`);
@@ -2367,19 +2379,73 @@ async function _saveExpense() {
   loadHome(); loadExpenses();
 }
 
-async function deleteExpense() {
+function deleteExpense() {
   const id = $('exp-id').value;
   if (!id) return;
-  const linked = await sbGet('household_reimbursements', `txn_id=eq.${encodeURIComponent(id)}&status=eq.pending&limit=20`);
-  if (linked === null) return;
-  for (const reimbursement of linked) {
-    if (await sbDelete('household_reimbursements', reimbursement.id) === null) return;
-  }
-  if (await sbDelete('transactions', id) === null) return;
   closeModal('m-expense');
-  toast('Expense deleted');
-  loadHome(); loadExpenses();
+  softDeleteExpense(id);
 }
+
+async function hardDeleteExpense(id) {
+  const linked = await sbGet('household_reimbursements', `txn_id=eq.${encodeURIComponent(id)}&status=eq.pending&limit=20`);
+  if (linked === null) return false;
+  for (const x of linked) { if (await sbDelete('household_reimbursements', x.id) === null) return false; }
+  return (await sbDelete('transactions', id)) !== null;
+}
+function rerenderTxns() {
+  const a = document.querySelector('.screen.active')?.id.replace('screen-', '');
+  if (a === 'home') { renderHomeStats(); renderRibbon(); renderHomeRecent(); renderBreakdown(); }
+  else if (a === 'expenses') renderExpenseRows();
+}
+let _pendDel = null;
+function restoreDeleted(p) {
+  const byDate = (a, b) => String(b.txn_date).localeCompare(String(a.txn_date));
+  if (p.e) cache.expenses.push(p.e), cache.expenses.sort(byDate);
+  if (p.m) cache.month.push(p.m), cache.month.sort(byDate);
+  rerenderTxns();
+}
+function flushDelete() {
+  if (!_pendDel) return;
+  const p = _pendDel; _pendDel = null; clearTimeout(p.timer);
+  hardDeleteExpense(p.id).then(ok => { if (!ok) { restoreDeleted(p); toast('Delete failed — expense restored', true); } });
+}
+function softDeleteExpense(id) {
+  flushDelete();
+  const take = arr => { const i = arr.findIndex(x => String(x.id) === String(id)); return i < 0 ? null : arr.splice(i, 1)[0]; };
+  const p = { id, e: take(cache.expenses), m: take(cache.month) };
+  if (!p.e && !p.m) return;
+  p.timer = setTimeout(flushDelete, 5000);
+  _pendDel = p;
+  rerenderTxns();
+  snack('Expense deleted', 'Undo', () => {
+    if (_pendDel && _pendDel.id === id) { clearTimeout(_pendDel.timer); _pendDel = null; restoreDeleted(p); }
+  });
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) flushDelete(); });
+addEventListener('pagehide', flushDelete);
+
+/* swipe left on a transaction row to delete (with Undo) */
+let _sw = null;
+document.addEventListener('touchstart', e => {
+  const r = e.target.closest('.row[data-txn="1"]');
+  if (!r) { _sw = null; return; }
+  const t = e.touches[0]; _sw = { r, x: t.clientX, y: t.clientY, dx: 0, lock: false };
+}, { passive: true });
+document.addEventListener('touchmove', e => {
+  if (!_sw) return;
+  const t = e.touches[0], dx = t.clientX - _sw.x, dy = t.clientY - _sw.y;
+  if (!_sw.lock) {
+    if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { _sw = null; return; }
+    if (Math.abs(dx) > 10) _sw.lock = true;
+  }
+  if (_sw.lock) { _sw.dx = Math.min(0, dx); _sw.r.style.transition = 'none'; _sw.r.style.transform = `translateX(${_sw.dx}px)`; }
+}, { passive: true });
+document.addEventListener('touchend', () => {
+  if (!_sw) return;
+  const { r, dx, lock } = _sw; _sw = null;
+  r.style.transition = 'transform .2s'; r.style.transform = '';
+  if (lock && dx < -90) softDeleteExpense(r.dataset.row);
+}, { passive: true });
 
 async function saveDebt() {
   const name   = $('debt-name').value.trim();
