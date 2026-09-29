@@ -850,6 +850,28 @@ body { background-attachment: scroll !important; }
 /* touch + legibility */
 .monthpick button, .row .actions button, .mini, .match-row button { min-width: 44px; min-height: 44px; }
 .overlay .sheet { max-height: 90dvh; }
+
+/* ── Motion polish ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  .screen.active { animation: tabIn .28s var(--ease-m3); }
+  @keyframes tabIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .screen.enter .row, .screen.enter .holding, .screen.enter .breakdown {
+    animation: rowIn .38s var(--ease-m3) both; animation-delay: calc(var(--i, 0) * 35ms);
+  }
+  @keyframes rowIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .row, .holding, #fab { transition: transform .15s var(--ease-m3); }
+  .row:active, .holding:active { transform: scale(.985); }
+  #fab:active { transform: scale(.92); }
+  .confetti { position: fixed; top: 0; left: 0; width: 100%; height: 0; z-index: 9999; pointer-events: none; overflow: visible; }
+  .confetti i {
+    position: absolute; top: 0; width: 8px; height: 12px; border-radius: 2px; opacity: 0;
+    animation: fall var(--d, 1.4s) cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  @keyframes fall {
+    0%   { opacity: 1; transform: translate(0, 40vh) rotate(0); }
+    100% { opacity: 0; transform: translate(var(--x, 0), calc(40vh + var(--y, 200px))) rotate(var(--r, 540deg)); }
+  }
+}
 </style>
 </head>
 <body>
@@ -2935,6 +2957,76 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(err => console.error('SW register error', err));
   });
 }
+
+/* ═══ Motion polish (count-up, stagger, confetti) ═══ */
+(() => {
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (calm) return;
+
+  // Count-up: animate any number that changes in these elements
+  ['hero-spent','pf-value','stat-in','stat-net','stat-owed','pf-invested','owed-total'].forEach(id => {
+    const el = $(id); if (!el) return;
+    let last = null, raf = 0;
+    const mo = new MutationObserver(() => {
+      const t = el.textContent;
+      const m = /^(\D*?)(\d[\d,]*(?:\.\d+)?)(\D*)$/.exec(t);
+      if (!m) { last = null; return; }
+      const to = parseFloat(m[2].replace(/,/g, '')), dec = (m[2].split('.')[1] || '').length;
+      const from = last == null ? 0 : last; last = to;
+      if (from === to) return;
+      const fmt = v => Number(v).toLocaleString('en-IN', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+      const t0 = performance.now(), dur = 700;
+      cancelAnimationFrame(raf);
+      const step = now => {
+        const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+        el.textContent = p >= 1 ? t : m[1] + fmt(from + (to - from) * e) + m[3];
+        mo.takeRecords();
+        if (p < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    });
+    mo.observe(el, { childList: true, characterData: true, subtree: true });
+  });
+
+  // Stagger: rows animate in when a tab opens (and while its data loads)
+  const stagger = scr => {
+    scr.querySelectorAll('.rows, .breakdown').forEach(c => [...c.children].forEach((r, i) => r.style.setProperty('--i', Math.min(i, 10))));
+  };
+  document.querySelectorAll('.screen').forEach(scr => {
+    let timer;
+    new MutationObserver(() => {
+      if (!scr.classList.contains('active')) return;
+      scr.classList.add('enter'); stagger(scr);
+      clearTimeout(timer); timer = setTimeout(() => scr.classList.remove('enter'), 1500);
+    }).observe(scr, { attributes: true, attributeFilter: ['class'] });
+    new MutationObserver(() => { if (scr.classList.contains('enter')) stagger(scr); })
+      .observe(scr, { childList: true, subtree: true });
+  });
+
+  // Confetti when something is settled / money received
+  function confetti() {
+    const box = document.createElement('div'); box.className = 'confetti';
+    const cols = ['#4CAF50','#FFC107','#03A9F4','#E91E63','#9C27B0','#FF7043'];
+    for (let i = 0; i < 36; i++) {
+      const b = document.createElement('i');
+      b.style.left = (20 + Math.random() * 60) + '%';
+      b.style.background = cols[i % cols.length];
+      b.style.setProperty('--x', (Math.random() * 240 - 120) + 'px');
+      b.style.setProperty('--y', (120 + Math.random() * 240) + 'px');
+      b.style.setProperty('--r', (Math.random() * 900 - 450) + 'deg');
+      b.style.setProperty('--d', (1 + Math.random() * .8) + 's');
+      box.appendChild(b);
+    }
+    document.body.appendChild(box);
+    try { navigator.vibrate && navigator.vibrate(15); } catch {}
+    setTimeout(() => box.remove(), 2200);
+  }
+  const _toast = toast;
+  toast = function (msg, bad) {
+    _toast(msg, bad);
+    if (!bad && /^(Settled|Marked as settled|Linked — marked as paid|\+₹)/.test(String(msg))) confetti();
+  };
+})();
 </script>
 </body>
 </html>
