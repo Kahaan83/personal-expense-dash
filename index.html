@@ -845,6 +845,8 @@ body { background-attachment: scroll !important; }
 .toast.act { pointer-events: auto; display: flex; gap: 14px; align-items: center; }
 .snack-act { color: var(--md-sys-color-primary); font-weight: 700; min-height: 44px; padding: 0 8px; }
 .row[data-txn="1"] { touch-action: pan-y; will-change: transform; }
+#net-bar { position: fixed; top: env(safe-area-inset-top, 0px); left: 50%; transform: translateX(-50%); margin-top: 6px; z-index: 90; background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface); border: 1px solid var(--glass-border); border-radius: var(--r-full); padding: 6px 14px; font-size: 12px; font-weight: 600; }
+#net-bar[hidden] { display: none; }
 /* touch + legibility */
 .monthpick button, .row .actions button, .mini, .match-row button { min-width: 44px; min-height: 44px; }
 .overlay .sheet { max-height: 90dvh; }
@@ -1199,11 +1201,13 @@ body { background-attachment: scroll !important; }
     <div class="field"><label for="rcv-date">Date</label><input id="rcv-date" type="date" /></div>
   </div>
   <div class="field"><label for="rcv-from">From / description</label><input id="rcv-from" type="text" placeholder="Aadit, Swiggy refund, pocket money…" /></div>
+  <input id="rcv-id" type="hidden" />
   <div class="field"><label for="rcv-reimb">Is this a reimbursement?</label><select id="rcv-reimb"><option value="">Not a reimbursement</option></select></div>
   <div class="field"><label for="rcv-category">Category</label><select id="rcv-category">
     <option value="Income">Income / salary</option>
     <option value="Transfer">Transfer / pocket money</option>
     <option value="Other">Other</option>
+    <option value="Reimbursement">Reimbursement</option>
   </select></div>
   <button class="btn" data-act="save-received">Save</button>
 </div></div>
@@ -1261,6 +1265,7 @@ body { background-attachment: scroll !important; }
   <div class="mgrid" id="mgrid"></div>
 </div></div>
 
+<button id="net-bar" hidden></button>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -1389,7 +1394,9 @@ function updateChipsOverflow() {
 /* ═══════════════════════════════════════════════════════════════
    SUPABASE
    ═══════════════════════════════════════════════════════════════ */
-async function sb(path, { method = 'GET', body, prefer } = {}) {
+let _netErr = false;
+async function sb(path, { method = 'GET', body, prefer, quiet } = {}) {
+  _netErr = false;
   if (!SB_URL || !SB_KEY) { toast('Connect Supabase in Settings first', true); return null; }
   try {
     const res = await fetch(`${SB_URL.replace(/\/+$/,'')}/rest/v1/${path}`, {
@@ -1404,19 +1411,52 @@ async function sb(path, { method = 'GET', body, prefer } = {}) {
     if (!res.ok) {
       const detail = await res.text();
       console.error('Supabase', res.status, detail);
-      toast(res.status === 401 ? 'Supabase rejected key — check Settings' : `Supabase error (${res.status})`, true);
+      if (!quiet) toast(res.status === 401 ? 'Supabase rejected key — check Settings' : `Supabase error (${res.status})`, true);
       return null;
     }
     const text = await res.text();
     return text ? JSON.parse(text) : [];
   } catch (err) {
     console.error(err);
-    toast("Can't reach Supabase — check network", true);
+    _netErr = true;
+    if (!quiet) toast("Can't reach Supabase — check network", true);
     return null;
   }
 }
 const sbGet    = (t, q = '')   => sb(`${t}?${q}`);
-const sbInsert = (t, body)     => sb(t, { method: 'POST', body });
+const sbInsert = (t, body, quiet) => sb(t, { method: 'POST', body, quiet });
+
+/* ── Offline queue (new expenses / received money) ───────────── */
+const Q_KEY = 'ledger_queue';
+const qLoad = () => { try { return JSON.parse(localStorage.getItem(Q_KEY) || '[]'); } catch { return []; } };
+const qSave = q => { try { localStorage.setItem(Q_KEY, JSON.stringify(q)); } catch {} updateNetBar(); };
+function enqueueTxn(row, reimb) { const q = qLoad(); q.push({ row, reimb: reimb || null, ts: Date.now() }); qSave(q); }
+let _flushing = false;
+async function flushQueue() {
+  if (_flushing || !navigator.onLine || !SB_URL) return;
+  const q = qLoad(); if (!q.length) return;
+  _flushing = true; let n = 0;
+  try {
+    while (q.length) {
+      const it = q[0];
+      const res = await sbInsert('transactions', it.row, true);
+      if (res === null) break;
+      if (it.reimb && res[0]) await sbInsert('household_reimbursements', { txn_id: res[0].id, ...it.reimb, status: 'pending' }, true);
+      q.shift(); qSave(q); n++;
+    }
+  } finally { _flushing = false; }
+  if (n) {
+    toast(`Synced ${n} offline ${n === 1 ? 'entry' : 'entries'}`);
+    const a = document.querySelector('.screen.active')?.id.replace('screen-', '');
+    if (a === 'home') loadHome(); if (a === 'expenses') loadExpenses(); if (a === 'people') loadPeople();
+  }
+}
+function updateNetBar() {
+  const b = $('net-bar'); if (!b) return;
+  const n = qLoad().length, off = !navigator.onLine;
+  b.hidden = !(off || n);
+  b.textContent = off ? `Offline${n ? ` · ${n} waiting to sync` : ''}` : `${n} waiting to sync · tap to retry`;
+}
 const sbUpdate = (t, id, body) => sb(`${t}?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', body, prefer: 'return=minimal' });
 const sbDelete = (t, id)       => sb(`${t}?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE', prefer: 'return=minimal' });
 
@@ -1543,7 +1583,7 @@ function txnRow(t, actions = false) {
   const name = t.merchant_display || t.merchant_raw || 'Transfer';
   const sub = [fmtDateTime(t.txn_date), t.note].filter(Boolean).join(' · ');
   return `
-  <div class="row${debit ? ' tappable' : ''}" data-row="${esc(t.id)}" data-txn="${debit ? 1 : ''}"${debit ? ` data-act="edit-expense" data-id="${esc(t.id)}"` : ''}>
+  <div class="row tappable" data-row="${esc(t.id)}" data-txn="1" data-act="${debit ? 'edit-expense' : 'edit-received'}" data-id="${esc(t.id)}">
     <div class="chip-dot" style="background:${colour}26;color:${colour}">${EMOJI[cat] || '·'}</div>
     <div class="row-mid">
       <div class="row-name">${esc(name)}</div>
@@ -2283,8 +2323,8 @@ function openModal(id) {
   const first = $(id).querySelector('input:not([type="hidden"]):not([type="checkbox"]), select, textarea');
   if (first) setTimeout(() => first.focus({ preventScroll: true }), 120);
 }
-window.addEventListener('popstate', () => { const o = document.querySelector('.overlay.open'); if (o) { o.classList.remove('open'); if (o.id === 'm-expense') resetExpenseSheet(); } });
-function closeModal(id) { const wasOpen = $(id).classList.contains('open'); $(id).classList.remove('open'); if (wasOpen && history.state && history.state.modal) history.back(); if (id === 'm-expense') resetExpenseSheet(); }
+window.addEventListener('popstate', () => { const o = document.querySelector('.overlay.open'); if (o) { o.classList.remove('open'); if (o.id === 'm-expense') resetExpenseSheet(); if (o.id === 'm-received') resetReceivedSheet(); } });
+function closeModal(id) { const wasOpen = $(id).classList.contains('open'); $(id).classList.remove('open'); if (wasOpen && history.state && history.state.modal) history.back(); if (id === 'm-expense') resetExpenseSheet(); if (id === 'm-received') resetReceivedSheet(); }
 
 function resetExpenseSheet() {
   $('exp-title').textContent = 'Add expense';
@@ -2320,6 +2360,21 @@ function openEditExpense(id) {
   openModal('m-expense');
 }
 
+function resetReceivedSheet() {
+  $('rcv-id').value = '';
+  document.querySelector('#m-received .sheet-title span').textContent = 'Record money received';
+}
+function openEditReceived(id) {
+  const t = cache.month.find(x => String(x.id) === String(id));
+  if (!t) return;
+  resetReceivedSheet();
+  document.querySelector('#m-received .sheet-title span').textContent = 'Edit money received';
+  $('rcv-id').value = t.id; $('rcv-amount').value = t.amount;
+  $('rcv-from').value = t.merchant_display || t.merchant_raw || '';
+  $('rcv-date').value = dateOnly(t.txn_date); $('rcv-date').dataset.orig = $('rcv-date').value;
+  $('rcv-category').value = [...$('rcv-category').options].some(o => o.value === t.category) ? t.category : 'Other';
+  openModal('m-received');
+}
 function openDeleteExpense(id) {
   openEditExpense(id);
   $('exp-title').textContent = 'Delete expense?';
@@ -2345,7 +2400,7 @@ async function _saveExpense() {
   if (!(amount > 0)) { toast('Enter amount above zero', true); return; }
   if (!merchant)     { toast('Add a merchant description', true); return; }
   if (!date)         { toast('Select a date', true); return; }
-  if (GM_KEY && category === 'Other') category = (await aiCategorise(merchant)) || 'Other';
+  if (navigator.onLine && GM_KEY && category === 'Other') category = (await aiCategorise(merchant)) || 'Other';
   const txn_date = dateOnly(date);
   if (remember) await rememberMerchant(merchant, category);
   if (id) {
@@ -2365,11 +2420,18 @@ async function _saveExpense() {
     }
     toast('Expense updated');
   } else {
-    const res = await sbInsert('transactions', {
+    const row = {
       type: 'debit', amount, merchant_raw: merchant, merchant_display: merchant,
       category, txn_date, is_reimbursable: reimb, sms_raw: 'manual_entry'
-    });
-    if (res === null) return;
+    };
+    const res = navigator.onLine ? await sbInsert('transactions', row) : null;
+    if (res === null) {
+      if (!navigator.onLine || _netErr) {
+        enqueueTxn(row, reimb ? { amount, description: merchant } : null);
+        closeModal('m-expense'); toast("Saved offline — will sync when you're back online");
+      }
+      return;
+    }
     if (reimb && res?.[0]) {
       await sbInsert('household_reimbursements', { txn_id: res[0].id, amount, description: merchant, status: 'pending' });
     }
@@ -2581,12 +2643,24 @@ async function saveReceived() {
   if (!(amount > 0)) { toast('Enter amount above zero', true); return; }
   if (!from)         { toast('Add description or payer', true); return; }
   if (!date)         { toast('Select a date', true); return; }
+  const eid = $('rcv-id').value;
+  if (eid) {
+    if (await sbUpdate('transactions', eid, { amount, merchant_raw: from, merchant_display: from, category: $('rcv-category').value,
+      ...(date !== $('rcv-date').dataset.orig ? { txn_date: dateOnly(date) } : {}) }) === null) return;
+    closeModal('m-received'); toast('Updated'); loadHome(); loadPeople(); return;
+  }
   const rid = $('rcv-reimb').value;
-  if (await sbInsert('transactions', {
-    type: 'credit', amount, merchant_raw: from, merchant_display: from,
-    category: rid ? 'Reimbursement' : $('rcv-category').value,
-    txn_date: dateOnly(date), sms_raw: 'manual_entry'
-  }) === null) return;
+  const rrow = { type: 'credit', amount, merchant_raw: from, merchant_display: from,
+    category: rid ? 'Reimbursement' : $('rcv-category').value, txn_date: dateOnly(date), sms_raw: 'manual_entry' };
+  const rres = (!navigator.onLine && !rid) ? null : await sbInsert('transactions', rrow);
+  if (rres === null) {
+    if (!rid && (!navigator.onLine || _netErr)) {
+      enqueueTxn(rrow); closeModal('m-received');
+      ['rcv-amount','rcv-from'].forEach(k => $(k).value = '');
+      toast("Saved offline — will sync when you're back online");
+    }
+    return;
+  }
   if (rid) await settleReimbWith(rid, amount, dateOnly(date));
   closeModal('m-received');
   ['rcv-amount','rcv-from'].forEach(k => $(k).value = '');
@@ -2734,6 +2808,7 @@ const ACTIONS = {
   'toggle-row':    el => el.classList.toggle('open'),
   'add-expense':   () => openAddExpense(),
   'edit-expense':  el => openEditExpense(el.dataset.id),
+  'edit-received': el => openEditReceived(el.dataset.id),
   'ask-delete':    el => openDeleteExpense(el.dataset.id),
   'save-expense':  () => saveExpense(),
   'delete-expense':() => deleteExpense(),
@@ -2749,7 +2824,7 @@ const ACTIONS = {
   'settle-household': el => settleHousehold(el.dataset.id),
   'add-household': () => openModal('m-household'),
   'save-household':() => saveHousehold(),
-  'add-received':  () => { $('rcv-date').value = ymd(new Date()); openModal('m-received'); },
+  'add-received':  () => { resetReceivedSheet(); $('rcv-date').value = ymd(new Date()); openModal('m-received'); },
   'save-received': () => saveReceived(),
   'link-credit': async el => { const i = $('lnk-credit-id'); i.value = el.dataset.id; i.dataset.amt = el.dataset.amt; i.dataset.date = el.dataset.date; await fillReimbSelect('lnk-reimb'); openModal('m-link'); },
   'save-link': () => saveLink(),
@@ -2836,6 +2911,11 @@ if (SB_URL && SB_KEY) {
   switchTab('settings');
 }
 
+addEventListener('online', () => { updateNetBar(); flushQueue(); });
+addEventListener('offline', updateNetBar);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) flushQueue(); });
+$('net-bar').onclick = flushQueue;
+updateNetBar(); flushQueue();
 document.querySelectorAll('.overlay').forEach(o => { o.setAttribute('role','dialog'); o.setAttribute('aria-modal','true'); });
 new MutationObserver(() => document.querySelectorAll('.row:not([role])').forEach(x => { x.setAttribute('role','button'); x.tabIndex = 0; }))
   .observe(document.body, { childList: true, subtree: true });
