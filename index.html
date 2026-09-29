@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta http-equiv="Content-Security-Policy" content="connect-src 'self' https://*.supabase.co https://generativelanguage.googleapis.com">
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#0C1210" />
@@ -745,7 +746,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .overlay.open { display: flex; }
 .sheet {
-  width: 100%; max-width: 448px; max-height: 90vh; overflow-y: auto;
+  width: 100%; max-width: 448px; max-height: 90dvh; overflow-y: auto;
   background: var(--md-sys-color-surface-container-high);
   border: 1px solid var(--glass-border);
   border-bottom: none; border-radius: var(--r-xl) var(--r-xl) 0 0;
@@ -833,6 +834,17 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 .toast.bad { border-color: var(--md-sys-color-debit); color: var(--md-sys-color-debit); }
+/* perf: blur only on nav/sheet/toast/overlay */
+.ribbon, .ai, .row, .skel-row, .breakdown, .holding, .set-card, .fold,
+.match-row, .confirm, .owed-bar, .quick-input-wrap, .search input,
+.chip, .monthpick, .field input, .field select, .danger-note,
+.mgrid button, .parsed, .filters {
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+body { background-attachment: scroll !important; }
+/* touch + legibility */
+.monthpick button, .row .actions button, .mini, .match-row button { min-width: 44px; min-height: 44px; }
+.overlay .sheet { max-height: 90dvh; }
 </style>
 </head>
 <body>
@@ -982,7 +994,6 @@ input, select, textarea { font: inherit; color: inherit; }
     <div class="sec">
       <h2>Active holdings</h2>
       <span style="display:flex;gap:10px">
-        <button data-act="sync-coindcx" id="btn-coindcx">Sync CoinDCX</button>
         <button data-act="refresh-prices" id="btn-prices">Estimate prices</button>
         <button data-act="save-prices" id="btn-save-prices" style="display:none">Save estimates</button>
       </span>
@@ -1064,15 +1075,6 @@ input, select, textarea { font: inherit; color: inherit; }
       </div>
     </div>
 
-    <div class="set-group">
-      <p>Investments</p>
-      <div class="set-card">
-        <button class="set-row" data-act="open-coindcx">
-          <span><span class="set-t">CoinDCX API</span><span class="set-s" id="cx-status">Not connected</span></span>
-          <span class="set-r" id="cx-dot"><span class="material-symbols-rounded">chevron_right</span></span>
-        </button>
-      </div>
-    </div>
 
     <div class="set-group">
       <p>Quick Add Actions</p>
@@ -1161,7 +1163,7 @@ input, select, textarea { font: inherit; color: inherit; }
       <option value="mutual_fund">Mutual fund</option><option value="stock">Stock</option><option value="crypto">Crypto</option>
     </select></div>
     <div class="field"><label for="inv-source">Source</label><select id="inv-source">
-      <option value="groww">Groww</option><option value="coindcx">CoinDCX</option><option value="manual">Manual</option>
+      <option value="groww">Groww</option><option value="manual">Manual</option>
     </select></div>
   </div>
   <div class="pair">
@@ -1177,6 +1179,14 @@ input, select, textarea { font: inherit; color: inherit; }
   <button class="btn btn-danger" id="inv-delete" style="display:none" data-act="delete-holding">Delete holding</button>
 </div></div>
 
+<div class="overlay" id="m-link"><div class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title"><span>Link to reimbursement</span><button data-act="close" data-modal="m-link"><span class="material-symbols-rounded">close</span></button></div>
+  <input id="lnk-credit-id" type="hidden" />
+  <div class="field"><label for="lnk-reimb">Which pending reimbursement?</label><select id="lnk-reimb"></select></div>
+  <button class="btn" data-act="save-link">Link &amp; mark paid</button>
+</div></div>
+
 <div class="overlay" id="m-received"><div class="sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-title"><span>Record money received</span><button data-act="close" data-modal="m-received"><span class="material-symbols-rounded">close</span></button></div>
@@ -1186,6 +1196,7 @@ input, select, textarea { font: inherit; color: inherit; }
     <div class="field"><label for="rcv-date">Date</label><input id="rcv-date" type="date" /></div>
   </div>
   <div class="field"><label for="rcv-from">From / description</label><input id="rcv-from" type="text" placeholder="Aadit, Swiggy refund, pocket money…" /></div>
+  <div class="field"><label for="rcv-reimb">Is this a reimbursement?</label><select id="rcv-reimb"><option value="">Not a reimbursement</option></select></div>
   <div class="field"><label for="rcv-category">Category</label><select id="rcv-category">
     <option value="Income">Income / salary</option>
     <option value="Transfer">Transfer / pocket money</option>
@@ -1236,16 +1247,6 @@ input, select, textarea { font: inherit; color: inherit; }
   <button class="btn btn-ghost" data-act="clear-gemini" style="margin-top:10px">Remove Key</button>
 </div></div>
 
-<div class="overlay" id="m-coindcx"><div class="sheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-title"><span>CoinDCX API</span><button data-act="close" data-modal="m-coindcx"><span class="material-symbols-rounded">close</span></button></div>
-  <p class="hint">Create a read-only key under CoinDCX → Account → API.</p>
-  <div class="field"><label for="cx-key">API key</label><input id="cx-key" type="text" placeholder="…" /></div>
-  <div class="field"><label for="cx-secret">API secret</label><input id="cx-secret" type="password" placeholder="…" /></div>
-  <button class="btn" data-act="save-coindcx">Save credentials</button>
-  <button class="btn btn-ghost" data-act="clear-coindcx" style="margin-top:10px">Remove key</button>
-</div></div>
-
 <div class="overlay" id="m-month"><div class="sheet">
   <div class="sheet-handle"></div>
   <div class="sheet-title"><span>Jump to month</span><button data-act="close" data-modal="m-month"><span class="material-symbols-rounded">close</span></button></div>
@@ -1286,8 +1287,6 @@ function skeletonRows(n, widths) {
 let SB_URL = localStorage.getItem('sb_url') || '';
 let SB_KEY = localStorage.getItem('sb_key') || '';
 let GM_KEY = localStorage.getItem('gemini_key') || '';
-let CX_KEY = localStorage.getItem('coindcx_key') || '';
-let CX_SECRET = localStorage.getItem('coindcx_secret') || '';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const CATS = ['Food','Groceries','Transport','Shopping','Household','Health',
@@ -1304,7 +1303,7 @@ const view = { month: new Date().getMonth(), year: new Date().getFullYear() };
 let pickerYear = view.year;
 const cache = { expenses: [], month: [], holdings: [], settledReimb: 0 };
 let catFilter = 'all';
-let loadToken = 0;
+let homeToken = 0, expToken = 0;
 
 /* ═══════════════════════════════════════════════════════════════
    HELPERS
@@ -1323,7 +1322,7 @@ function dateOnly(d) {
   return dOnly(dt.getFullYear(), dt.getMonth(), dt.getDate());
 }
 const ymd = dateOnly;
-const monthRangeISO = (y, m) => [dOnly(y, m, 1), dOnly(y, m + 1, 1)];
+const monthRangeISO = (y, m) => [dOnly(y, m, 1) + 'T00:00:00%2B05:30', dOnly(y, m + 1, 1) + 'T00:00:00%2B05:30'];
 const EXP_PAGE_SIZE = 60;
 const INV_PAGE_SIZE = 60;
 
@@ -1419,15 +1418,16 @@ async function gemini(prompt, maxTokens = 600, jsonMode = false) {
   let lastErrMsg = '';
   for (const model of candidateModels) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
       const payload = {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.2, maxOutputTokens: maxTokens,
+          temperature: 0.2, maxOutputTokens: maxTokens, thinkingConfig: { thinkingBudget: 0 },
           ...(jsonMode ? { responseMimeType: "application/json" } : {})
         }
       };
-      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const _ac = new AbortController(); const _to = setTimeout(() => _ac.abort(), 10000);
+      let res; try { res = await fetch(url, { method: 'POST', signal: _ac.signal, headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key }, body: JSON.stringify(payload) }); } finally { clearTimeout(_to); }
       if (res.status === 404 || res.status === 503) { lastErrMsg = `Model ${model} returned ${res.status}`; continue; }
       if (!res.ok) {
         const errorJson = await res.json().catch(() => null);
@@ -1488,9 +1488,12 @@ function shiftMonth(delta) {
   view.year = d.getFullYear();
   view.month = d.getMonth();
   syncMonthLabels();
-  const active = document.querySelector('.screen.active')?.id.replace('screen-','');
-  if (active === 'home') loadHome();
-  if (active === 'expenses') loadExpenses();
+  clearTimeout(shiftMonth._t);
+  shiftMonth._t = setTimeout(() => {
+    const active = document.querySelector('.screen.active')?.id.replace('screen-','');
+    if (active === 'home') loadHome();
+    if (active === 'expenses') loadExpenses();
+  }, 150);
 }
 
 function syncMonthLabels() {
@@ -1548,7 +1551,7 @@ function txnRow(t, actions = false) {
 function groupByDay(list) {
   const groups = new Map();
   list.forEach(t => {
-    const day = String(t.txn_date).slice(0, 10);
+    const day = dateOnly(t.txn_date);
     if (!groups.has(day)) groups.set(day, []);
     groups.get(day).push(t);
   });
@@ -1563,7 +1566,7 @@ const errState = msg => `<div class="empty"><div class="e"><span class="material
 async function loadHome() {
   syncMonthLabels();
   if (!SB_URL) return;
-  const token = ++loadToken;
+  const token = ++homeToken;
 
   $('recent-rows').innerHTML = skeletonRows(4);
 
@@ -1571,18 +1574,29 @@ async function loadHome() {
 
   // ── CHANGED: fetch settled reimbursements in parallel ──────────────────────
   const [txns, debts, settledReimb] = await Promise.all([
-    sbGet('transactions', `txn_date=gte.${start}&txn_date=lt.${end}&order=txn_date.desc&limit=${EXP_PAGE_SIZE}`),
+    sbGet('transactions', `txn_date=gte.${start}&txn_date=lt.${end}&order=txn_date.desc&limit=5000`),
     sbGet('debts', 'status=neq.settled&select=amount,amount_settled'),
-    sbGet('household_reimbursements', `status=eq.settled&settled_date=gte.${start}&settled_date=lt.${end}&select=amount`)
+    sbGet('household_reimbursements', 'status=eq.settled&select=amount,txn_id,created_at&limit=5000')
   ]);
 
-  if (token !== loadToken) return;
+  if (token !== homeToken) return;
   if (!txns) { $('recent-rows').innerHTML = errState('Could not load transactions.'); return; }
-  cache.month = txns;
-  cache.monthHasMore = txns.length >= EXP_PAGE_SIZE;
+  cache.monthHasMore = false;
   cache.monthPage = 1;
   // ── CHANGED: cache settled reimbursement total for this month ──────────────
-  cache.settledReimb = (settledReimb || []).reduce((s, r) => s + Number(r.amount), 0);
+  cache.reimbByTxn = {}; let manual = 0, linked = 0;
+  (settledReimb || []).forEach(x => {
+    if (x.txn_id) cache.reimbByTxn[String(x.txn_id)] = (cache.reimbByTxn[String(x.txn_id)] || 0) + Number(x.amount);
+    else { const d = new Date(x.created_at); if (d.getFullYear() === view.year && d.getMonth() === view.month) manual += Number(x.amount); }
+  });
+  // reimbursed expenses count as "spent" for 0 in the month they happened; gross kept in amount_gross
+  cache.month = txns.map(t => {
+    const rb = t.type === 'debit' ? (cache.reimbByTxn[String(t.id)] || 0) : 0;
+    if (!rb) return t;
+    const eff = Math.max(0, Number(t.amount) - rb); linked += Number(t.amount) - eff;
+    return { ...t, amount_gross: t.amount, amount: eff };
+  });
+  cache.linkedReimb = linked; cache.settledReimb = manual;
 
   const owed = (debts || []).reduce((s, d) => s + Number(d.amount) - Number(d.amount_settled || 0), 0);
   $('stat-owed').textContent = '₹' + inr(owed);
@@ -1606,14 +1620,15 @@ function renderHomeStats() {
   const txns = cache.month;
   const debits   = txns.filter(t => t.type === 'debit' && t.category !== 'Investment');
   const invested = txns.filter(t => t.category === 'Investment' && t.type === 'debit');
-  const credits  = txns.filter(t => t.type === 'credit');
+  const credits  = txns.filter(t => t.type === 'credit' && t.category !== 'Reimbursement');
   const spent    = debits.reduce((s, t) => s + Number(t.amount), 0);
   const income   = credits.reduce((s, t) => s + Number(t.amount), 0);
   const net      = income - spent - invested.reduce((s, t) => s + Number(t.amount), 0);
 
   // ── CHANGED: hero shows net-of-reimbursements; label flips; subtitle added ─
-  const reimbursed = cache.settledReimb || 0;
-  const netSpent = Math.max(0, spent - reimbursed);
+  const linkedR = cache.linkedReimb || 0, manualR = cache.settledReimb || 0;
+  const reimbursed = linkedR + manualR;
+  const netSpent = Math.max(0, spent - manualR);
   $('hero-spent').textContent = inr(netSpent);
   document.querySelector('.ribbon-label').textContent =
     reimbursed > 0 ? 'Out of pocket' : 'Spent this month';
@@ -1627,7 +1642,7 @@ function renderHomeStats() {
     document.querySelector('.ribbon-amount').after(subtitleEl);
   }
   subtitleEl.textContent = reimbursed > 0
-    ? `Total out ₹${inr(spent)} · ₹${inr(reimbursed)} reimbursed` : '';
+    ? `Total out ₹${inr(spent + linkedR)} · ₹${inr(reimbursed)} reimbursed` : '';
 
   $('stat-in').textContent = '₹' + inr(income);
   const netEl = $('stat-net');
@@ -1637,10 +1652,9 @@ function renderHomeStats() {
 
 function renderHomeRecent() {
   const txns = [...cache.month].sort((a, b) => String(b.txn_date).localeCompare(String(a.txn_date)));
-  const more = cache.monthHasMore
-    ? `<button class="load-more" data-act="load-more-month">Load more transactions</button>` : '';
+  const more = '';
   $('recent-rows').innerHTML = txns.length
-    ? txns.slice(0, 6).map(t => txnRow(t)).join('') + more
+    ? txns.slice(0, 6).map(t => txnRow({ ...t, amount: t.amount_gross ?? t.amount })).join('') + more
     : `<div class="empty"><div class="e">₹</div><div class="t">Nothing here yet — type an expense above or tap <strong style="color:var(--md-sys-color-primary)">+</strong> to add one.</div></div>`;
 }
 
@@ -1671,10 +1685,10 @@ async function renderHeroDelta(netSpent, invested) {
   const prev = new Date(view.year, view.month - 1, 1);
   const [pStart, pEnd] = monthRangeISO(prev.getFullYear(), prev.getMonth());
   const prevTxns = await sbGet('transactions',
-    `txn_date=gte.${pStart}&txn_date=lt.${pEnd}&type=eq.debit&select=amount,category&limit=2000`);
+    `txn_date=gte.${pStart}&txn_date=lt.${pEnd}&type=eq.debit&select=id,amount,category&limit=2000`);
   const prevSpent = (prevTxns || [])
     .filter(t => t.category !== 'Investment')
-    .reduce((s, t) => s + Number(t.amount), 0);
+    .reduce((s, t) => s + Math.max(0, Number(t.amount) - ((cache.reimbByTxn || {})[String(t.id)] || 0)), 0);
   const investedTotal = invested.reduce((s, t) => s + Number(t.amount), 0);
   const parts = [];
   if (prevSpent > 0) {
@@ -1706,7 +1720,8 @@ function renderRibbon(all, debits) {
 
   const cumulative = new Array(days).fill(0);
   let running = 0;
-  for (let i = 0; i < days; i++) { running += perDay[i]; cumulative[i] = running; }
+  const _now = new Date(), _isCur = _now.getFullYear() === view.year && _now.getMonth() === view.month;
+  for (let i = 0; i < days; i++) { running += perDay[i]; cumulative[i] = (_isCur && i + 1 > _now.getDate()) ? null : running; }
 
   const maxCum   = Math.max(running, 1);
   const maxSpend = Math.max(...perDay, 1);
@@ -1720,9 +1735,9 @@ function renderRibbon(all, debits) {
 
   const lineRange = chartBottom - lineTop - barH - 6;
   const toY = v => (chartBottom - barH - 6) - (v / maxCum) * lineRange;
-  const pts = cumulative.map((v, i) => `${(i * step).toFixed(1)},${toY(v).toFixed(1)}`);
+  const pts = cumulative.map((v, i) => v === null ? null : `${(i * step).toFixed(1)},${toY(v).toFixed(1)}`).filter(Boolean);
 
-  const firstX = 0, lastX = ((days - 1) * step).toFixed(1);
+  const firstX = 0, lastX = pts[pts.length - 1].split(',')[0];
   const fillPath = `M ${pts.join(' L ')} L ${lastX},${chartBottom - barH - 4} L ${firstX},${chartBottom - barH - 4} Z`;
   const linePath = `M ${pts.join(' L ')}`;
 
@@ -1809,14 +1824,14 @@ Summarize the most important shift and largest outflow in 2-3 short sentences. C
 async function loadExpenses() {
   syncMonthLabels();
   if (!SB_URL) return;
-  const token = ++loadToken;
+  const token = ++expToken;
 
   $('expense-rows').innerHTML = skeletonRows(6);
 
   const [start, end] = monthRangeISO(view.year, view.month);
   const q = `txn_date=gte.${start}&txn_date=lt.${end}&type=eq.debit&order=txn_date.desc&limit=${EXP_PAGE_SIZE}`;
   const txns = await sbGet('transactions', q);
-  if (token !== loadToken) return;
+  if (token !== expToken) return;
   if (!txns) { $('expense-rows').innerHTML = errState('Could not load expenses.'); return; }
   cache.expenses = txns;
   cache.expHasMore = txns.length >= EXP_PAGE_SIZE;
@@ -2056,13 +2071,11 @@ let estimatedIds = new Set();
 
 async function saveEstimates() {
   if (!estimatedIds.size) { toast('Nothing estimated yet — run Estimate prices first'); return; }
-  let n = 0;
-  for (const h of cache.holdings) {
-    if (!estimatedIds.has(String(h.id))) continue;
-    const ok = await sbUpdate('investments', h.id, { current_value: h.current_value });
-    if (ok === null) { toast('Save failed — check connection', true); return; }
-    h.estimated = false; n++;
-  }
+  const todo = cache.holdings.filter(h => estimatedIds.has(String(h.id)));
+  const res = await Promise.all(todo.map(h => sbUpdate('investments', h.id, { current_value: h.current_value })));
+  if (res.some(x => x === null)) { toast('Save failed — check connection', true); return; }
+  todo.forEach(h => { h.estimated = false; });
+  const n = todo.length;
   estimatedIds = new Set();
   $('btn-save-prices').style.display = 'none';
   toast(`Saved ${n} price estimate${n === 1 ? '' : 's'}`);
@@ -2092,7 +2105,7 @@ async function loadMoreInvestments() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   COINDCX & MATCHING
+   MATCHING
    ═══════════════════════════════════════════════════════════════ */
 const DISMISS_KEY = 'dismissed_matches';
 function getDismissedMatches() {
@@ -2158,50 +2171,6 @@ async function confirmMatch(debtId, creditId) {
 }
 function dismissMatch(debtId, creditId) { addDismissedMatch(`${debtId}_${creditId}`); loadPeople(); }
 
-async function hmacHex(secret, message) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  const sig  = await crypto.subtle.sign('HMAC', key, enc.encode(message));
-  return [...new Uint8Array(sig)].map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function syncCoindcx() {
-  if (!CX_KEY || !CX_SECRET) { toast('Add CoinDCX credentials in Settings first'); return; }
-  const btn = $('btn-coindcx');
-  btn.disabled = true; btn.textContent = 'Syncing…';
-  try {
-    const body = JSON.stringify({ timestamp: Date.now() });
-    const sig  = await hmacHex(CX_SECRET, body);
-    const balRes = await fetch('https://api.coindcx.com/exchange/v1/users/balances', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-AUTH-APIKEY': CX_KEY, 'X-AUTH-SIGNATURE': sig },
-      body
-    });
-    if (!balRes.ok) { toast(`CoinDCX error (${balRes.status})`, true); return; }
-    const balances = (await balRes.json()).filter(b => Number(b.balance || 0) + Number(b.locked_balance || 0) > 0);
-    if (!balances.length) { toast('No non-zero CoinDCX balances'); return; }
-    const tickerRes = await fetch('https://api.coindcx.com/exchange/ticker');
-    const tickers = tickerRes.ok ? await tickerRes.json() : [];
-    const priceFor = currency => { const t = tickers.find(x => x.market === `${currency}INR`); return t ? Number(t.last_price) : null; };
-    let n = 0;
-    for (const b of balances) {
-      const units = Number(b.balance || 0) + Number(b.locked_balance || 0);
-      const price = priceFor(b.currency);
-      const current_value = price != null ? +(units * price).toFixed(2) : null;
-      const existing = cache.holdings.find(h => h.source === 'coindcx' && h.ticker === b.currency);
-      const patch = existing
-        ? { units, ...(current_value != null ? { current_value } : {}) }
-        : { name: `${b.currency} (CoinDCX)`, type: 'crypto', source: 'coindcx', ticker: b.currency, units, invested_amount: current_value ?? 0, current_value: current_value ?? 0, mode: 'active' };
-      const ok = existing ? await sbUpdate('investments', existing.id, patch) : await sbInsert('investments', patch);
-      if (ok !== null) n++;
-    }
-    toast(`Synced ${n} holding${n === 1 ? '' : 's'}`);
-    loadPortfolio();
-  } catch (err) {
-    console.error(err);
-    toast('CoinDCX unreachable (browser CORS restriction)', true);
-  } finally { btn.disabled = false; btn.textContent = 'Sync CoinDCX'; }
-}
 
 /* ═══════════════════════════════════════════════════════════════
    PEOPLE
@@ -2275,7 +2244,7 @@ async function loadPeople() {
           <div class="row-name">${esc(c.merchant_display || c.merchant_raw || 'Money received')}</div>
           <div class="row-sub">${esc(fmtDateTime(c.txn_date))} · ${esc(c.category || 'Income')}</div>
         </div>
-        <div class="row-right"><div class="row-amt num pos">+₹${inr(c.amount)}</div></div>
+        <div class="row-right"><div class="row-amt num pos">+₹${inr(c.amount)}</div>${c.category === 'Reimbursement' ? '' : `<button class="mini" data-act="link-credit" data-id="${esc(c.id)}" data-amt="${esc(c.amount)}" data-date="${esc(dateOnly(c.txn_date))}">Reimb.</button>`}</div>
       </div>`).join('')
     : `<div class="empty"><div class="t">No money received recently.</div></div>`;
 
@@ -2297,10 +2266,13 @@ async function loadPeople() {
    ═══════════════════════════════════════════════════════════════ */
 function openModal(id) {
   $(id).classList.add('open');
+  if (id === 'm-received') fillReimbSelect('rcv-reimb');
+  history.pushState({ modal: id }, '');
   const first = $(id).querySelector('input:not([type="hidden"]):not([type="checkbox"]), select, textarea');
   if (first) setTimeout(() => first.focus({ preventScroll: true }), 120);
 }
-function closeModal(id) { $(id).classList.remove('open'); if (id === 'm-expense') resetExpenseSheet(); }
+window.addEventListener('popstate', () => { const o = document.querySelector('.overlay.open'); if (o) { o.classList.remove('open'); if (o.id === 'm-expense') resetExpenseSheet(); } });
+function closeModal(id) { const wasOpen = $(id).classList.contains('open'); $(id).classList.remove('open'); if (wasOpen && history.state && history.state.modal) history.back(); if (id === 'm-expense') resetExpenseSheet(); }
 
 function resetExpenseSheet() {
   $('exp-title').textContent = 'Add expense';
@@ -2345,7 +2317,12 @@ function openDeleteExpense(id) {
 /* ═══════════════════════════════════════════════════════════════
    SAVE HANDLERS
    ═══════════════════════════════════════════════════════════════ */
+let _savingExp = false;
 async function saveExpense() {
+  if (_savingExp) return; _savingExp = true;
+  try { await _saveExpense(); } finally { _savingExp = false; }
+}
+async function _saveExpense() {
   const amount   = parseFloat($('exp-amount').value);
   const merchant = $('exp-merchant').value.trim();
   const date     = $('exp-date').value;
@@ -2458,7 +2435,7 @@ function openEditHolding(id) {
   $('inv-id').value = h.id;
   $('inv-name').value = h.name || '';
   $('inv-type').value = ['mutual_fund','stock','crypto'].includes(h.type) ? h.type : 'mutual_fund';
-  $('inv-source').value = ['groww','coindcx','manual'].includes(h.source) ? h.source : 'groww';
+  $('inv-source').value = ['groww','manual'].includes(h.source) ? h.source : 'groww';
   $('inv-units').value = h.units;
   $('inv-price').value = h.avg_buy_price || (Number(h.invested_amount) / (Number(h.units) || 1)).toFixed(2);
   $('inv-ticker').value = h.ticker || '';
@@ -2513,6 +2490,24 @@ async function deleteHolding() {
   loadPortfolio();
 }
 
+async function fillReimbSelect(selId) {
+  const list = await sbGet('household_reimbursements', 'status=eq.pending&order=created_at.desc') || [];
+  cache.pendingReimb = list;
+  $(selId).innerHTML = (selId === 'rcv-reimb' ? '<option value="">Not a reimbursement</option>' : '') +
+    list.map(h => `<option value="${esc(h.id)}">${esc(h.description || 'Household expense')} · ₹${inr(h.amount)}</option>`).join('');
+}
+async function settleReimbWith(rid, received, dateStr) {
+  const p = (cache.pendingReimb || []).find(x => String(x.id) === String(rid));
+  const amt = p ? Math.min(Number(p.amount), received) : received;
+  return sbUpdate('household_reimbursements', rid, { status: 'settled', settled_date: dateStr, amount: amt });
+}
+async function saveLink() {
+  const cid = $('lnk-credit-id').value, rid = $('lnk-reimb').value;
+  if (!rid) { toast('No pending reimbursement to link', true); return; }
+  if (await sbUpdate('transactions', cid, { category: 'Reimbursement' }) === null) return;
+  await settleReimbWith(rid, Number($('lnk-credit-id').dataset.amt), $('lnk-credit-id').dataset.date);
+  closeModal('m-link'); toast('Linked — marked as paid'); loadPeople(); loadHome();
+}
 async function saveReceived() {
   const amount = parseFloat($('rcv-amount').value);
   const from   = $('rcv-from').value.trim();
@@ -2520,11 +2515,13 @@ async function saveReceived() {
   if (!(amount > 0)) { toast('Enter amount above zero', true); return; }
   if (!from)         { toast('Add description or payer', true); return; }
   if (!date)         { toast('Select a date', true); return; }
+  const rid = $('rcv-reimb').value;
   if (await sbInsert('transactions', {
     type: 'credit', amount, merchant_raw: from, merchant_display: from,
-    category: $('rcv-category').value,
+    category: rid ? 'Reimbursement' : $('rcv-category').value,
     txn_date: dateOnly(date), sms_raw: 'manual_entry'
   }) === null) return;
+  if (rid) await settleReimbWith(rid, amount, dateOnly(date));
   closeModal('m-received');
   ['rcv-amount','rcv-from'].forEach(k => $(k).value = '');
   toast(`+₹${inr(amount)} recorded`);
@@ -2562,7 +2559,7 @@ async function settleDebt(id) {
 }
 async function settleHousehold(id) {
   if (await sbUpdate('household_reimbursements', id, { status: 'settled', settled_date: new Date().toISOString() }) === null) return;
-  toast('Settled'); loadPeople();
+  toast('Settled'); loadPeople(); loadHome();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2610,9 +2607,6 @@ function syncStatus() {
   $('sb-dot').className = 'set-r ' + (on ? 'dot-on' : 'dot-off');
   $('gm-status').textContent = GM_KEY ? 'Key set — Gemini 2.5 active' : 'Not set — AI features disabled';
   $('gm-dot').className = 'set-r ' + (GM_KEY ? 'dot-on' : 'dot-off');
-  const cxOn = !!(CX_KEY && CX_SECRET);
-  $('cx-status').textContent = cxOn ? 'Connected' : 'Not connected';
-  $('cx-dot').className = 'set-r ' + (cxOn ? 'dot-on' : 'dot-off');
 }
 
 async function testGeminiKey() {
@@ -2640,20 +2634,6 @@ function clearGemini() {
   $('ai-card').style.display = 'none'; syncStatus(); toast('Key removed');
 }
 
-function saveCoindcx() {
-  const key    = $('cx-key').value.trim();
-  const secret = $('cx-secret').value.trim();
-  if (!key || !secret) { toast('Enter both API key and secret', true); return; }
-  CX_KEY = key; CX_SECRET = secret;
-  localStorage.setItem('coindcx_key', key); localStorage.setItem('coindcx_secret', secret);
-  closeModal('m-coindcx'); syncStatus(); toast('CoinDCX connected');
-}
-function clearCoindcx() {
-  CX_KEY = ''; CX_SECRET = '';
-  localStorage.removeItem('coindcx_key'); localStorage.removeItem('coindcx_secret');
-  $('cx-key').value = ''; $('cx-secret').value = '';
-  syncStatus(); toast('CoinDCX key removed');
-}
 
 function saveSupabase() {
   const url = $('sb-url').value.trim().replace(/\/+$/, '');
@@ -2691,7 +2671,7 @@ const ACTIONS = {
   'ask-delete':    el => openDeleteExpense(el.dataset.id),
   'save-expense':  () => saveExpense(),
   'delete-expense':() => deleteExpense(),
-  filter:          el => { catFilter = el.dataset.cat; loadExpenses(); },
+  filter:          el => { catFilter = el.dataset.cat; document.querySelectorAll('[data-act="filter"]').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.cat === catFilter))); renderExpenseRows(); },
   'add-debt':      () => { $('debt-date').value = ymd(new Date()); openModal('m-debt'); },
   'save-debt':     () => saveDebt(),
   'ask-settle':    el => { document.querySelectorAll('.confirm').forEach(c => c.classList.remove('show'));
@@ -2705,6 +2685,8 @@ const ACTIONS = {
   'save-household':() => saveHousehold(),
   'add-received':  () => { $('rcv-date').value = ymd(new Date()); openModal('m-received'); },
   'save-received': () => saveReceived(),
+  'link-credit': async el => { const i = $('lnk-credit-id'); i.value = el.dataset.id; i.dataset.amt = el.dataset.amt; i.dataset.date = el.dataset.date; await fillReimbSelect('lnk-reimb'); openModal('m-link'); },
+  'save-link': () => saveLink(),
   'add-income':    () => openModal('m-income'),
   'save-income':   () => saveIncomeSource(),
   'add-investment':() => openAddInvestment(),
@@ -2728,10 +2710,6 @@ const ACTIONS = {
   'save-gemini':   () => saveGemini(),
   'clear-gemini':  () => clearGemini(),
   'test-gemini':   () => testGeminiKey(),
-  'open-coindcx':  () => { $('cx-key').value = CX_KEY; $('cx-secret').value = CX_SECRET; openModal('m-coindcx'); },
-  'save-coindcx':  () => saveCoindcx(),
-  'clear-coindcx': () => clearCoindcx(),
-  'sync-coindcx':  () => syncCoindcx()
 };
 
 document.addEventListener('click', e => {
@@ -2772,10 +2750,14 @@ window.addEventListener('resize', updateChipsOverflow);
    INIT & BOOTSTRAP
    ═══════════════════════════════════════════════════════════════ */
 $('exp-category').innerHTML = CATS.map(c => `<option value="${c}">${c}</option>`).join('');
+function setGreeting() {
 const currentHour = new Date().getHours();
 $('greeting').innerHTML = `<span class="material-symbols-rounded" style="font-size:16px;">${
   currentHour < 5 ? 'nightlight' : currentHour < 12 ? 'wb_sunny' : currentHour < 17 ? 'light_mode' : 'bedtime'
 }</span> ${currentHour < 5 ? 'Still up' : currentHour < 12 ? 'Good morning' : currentHour < 17 ? 'Good afternoon' : 'Good evening'}`;
+}
+setGreeting();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setGreeting(); });
 
 syncMonthLabels();
 syncStatus();
@@ -2788,6 +2770,10 @@ if (SB_URL && SB_KEY) {
   switchTab('settings');
 }
 
+document.querySelectorAll('.overlay').forEach(o => { o.setAttribute('role','dialog'); o.setAttribute('aria-modal','true'); });
+new MutationObserver(() => document.querySelectorAll('.row:not([role])').forEach(x => { x.setAttribute('role','button'); x.tabIndex = 0; }))
+  .observe(document.body, { childList: true, subtree: true });
+document.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('.row[role=button]')) { e.preventDefault(); e.target.click(); } });
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').catch(err => console.error('SW register error', err));
