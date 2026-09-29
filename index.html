@@ -1330,7 +1330,10 @@ function dateOnly(d) {
   return dOnly(dt.getFullYear(), dt.getMonth(), dt.getDate());
 }
 const ymd = dateOnly;
-const monthRangeISO = (y, m) => [dOnly(y, m, 1) + 'T00:00:00%2B05:30', dOnly(y, m + 1, 1) + 'T00:00:00%2B05:30'];
+const monthRangeISO = (y, m) => {
+  const nx = new Date(y, m + 1, 1); // Date rolls Dec -> Jan of next year
+  return [dOnly(y, m, 1) + 'T00:00:00%2B05:30', dOnly(nx.getFullYear(), nx.getMonth(), 1) + 'T00:00:00%2B05:30'];
+};
 const EXP_PAGE_SIZE = 60;
 const INV_PAGE_SIZE = 60;
 
@@ -1516,8 +1519,8 @@ async function aiCategorise(merchant) {
 async function rememberMerchant(merchant, category) {
   const pattern = merchant.trim().toUpperCase();
   if (!pattern) return;
-  const ok = await sb('merchant_mappings?on_conflict=pattern', {
-    method: 'POST', body: { pattern, category }, prefer: 'resolution=merge-duplicates,return=minimal'
+  const ok = await sb('merchant_mappings?on_conflict=raw_name', {
+    method: 'POST', body: { raw_name: pattern, display_name: merchant.trim(), category }, prefer: 'resolution=merge-duplicates,return=minimal'
   });
   if (ok === null) toast('Saved expense, but mapping save failed', true);
 }
@@ -2452,6 +2455,12 @@ async function hardDeleteExpense(id) {
   const linked = await sbGet('household_reimbursements', `txn_id=eq.${encodeURIComponent(id)}&limit=20`);
   if (linked === null) return false;
   for (const x of linked) { if (await sbDelete('household_reimbursements', x.id) === null) return false; }
+  // detach rows that reference this transaction (these FKs have no ON DELETE action)
+  const eid = encodeURIComponent(id);
+  const detach = (path, body) => sb(path, { method: 'PATCH', body, prefer: 'return=minimal' });
+  if (await detach(`debts?linked_txn_id=eq.${eid}`, { linked_txn_id: null }) === null) return false;
+  if (await detach(`income?txn_id=eq.${eid}`, { txn_id: null }) === null) return false;
+  if (await detach(`transactions?reimbursed_txn_id=eq.${eid}`, { reimbursed_txn_id: null }) === null) return false;
   return (await sbDelete('transactions', id)) !== null;
 }
 function rerenderTxns() {
