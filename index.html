@@ -2449,7 +2449,7 @@ function deleteExpense() {
 }
 
 async function hardDeleteExpense(id) {
-  const linked = await sbGet('household_reimbursements', `txn_id=eq.${encodeURIComponent(id)}&status=eq.pending&limit=20`);
+  const linked = await sbGet('household_reimbursements', `txn_id=eq.${encodeURIComponent(id)}&limit=20`);
   if (linked === null) return false;
   for (const x of linked) { if (await sbDelete('household_reimbursements', x.id) === null) return false; }
   return (await sbDelete('transactions', id)) !== null;
@@ -2624,16 +2624,16 @@ async function fillReimbSelect(selId) {
   $(selId).innerHTML = (selId === 'rcv-reimb' ? '<option value="">Not a reimbursement</option>' : '') +
     list.map(h => `<option value="${esc(h.id)}">${esc(h.description || 'Household expense')} · ₹${inr(h.amount)}</option>`).join('');
 }
-async function settleReimbWith(rid, received, dateStr) {
+async function settleReimbWith(rid, received, dateStr, creditId) {
   const p = (cache.pendingReimb || []).find(x => String(x.id) === String(rid));
   const amt = p ? Math.min(Number(p.amount), received) : received;
-  return sbUpdate('household_reimbursements', rid, { status: 'settled', settled_date: dateStr, amount: amt });
+  return sbUpdate('household_reimbursements', rid, { status: 'settled', settled_date: dateStr, amount: amt, ...(creditId ? { settled_txn_id: creditId } : {}) });
 }
 async function saveLink() {
   const cid = $('lnk-credit-id').value, rid = $('lnk-reimb').value;
   if (!rid) { toast('No pending reimbursement to link', true); return; }
   if (await sbUpdate('transactions', cid, { category: 'Reimbursement' }) === null) return;
-  await settleReimbWith(rid, Number($('lnk-credit-id').dataset.amt), $('lnk-credit-id').dataset.date);
+  await settleReimbWith(rid, Number($('lnk-credit-id').dataset.amt), $('lnk-credit-id').dataset.date, cid);
   closeModal('m-link'); toast('Linked — marked as paid'); loadPeople(); loadHome();
 }
 async function saveReceived() {
@@ -2661,7 +2661,7 @@ async function saveReceived() {
     }
     return;
   }
-  if (rid) await settleReimbWith(rid, amount, dateOnly(date));
+  if (rid) await settleReimbWith(rid, amount, dateOnly(date), rres?.[0]?.id);
   closeModal('m-received');
   ['rcv-amount','rcv-from'].forEach(k => $(k).value = '');
   toast(`+₹${inr(amount)} recorded`);
@@ -2694,7 +2694,8 @@ async function saveHousehold() {
 }
 
 async function settleDebt(id) {
-  if (await sbUpdate('debts', id, { status: 'settled', settled_date: new Date().toISOString() }) === null) return;
+  const _d = await sbGet('debts', `id=eq.${encodeURIComponent(id)}&select=amount`);
+  if (await sbUpdate('debts', id, { status: 'settled', settled_date: new Date().toISOString(), amount_settled: Number(_d?.[0]?.amount || 0) }) === null) return;
   toast('Settled'); loadPeople(); loadHome();
 }
 async function settleHousehold(id) {
