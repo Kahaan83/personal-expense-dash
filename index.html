@@ -1700,12 +1700,13 @@ function renderHomeStats() {
   const credits  = txns.filter(t => t.type === 'credit' && t.category !== 'Reimbursement');
   const spent    = debits.reduce((s, t) => s + Number(t.amount), 0);
   const income   = credits.reduce((s, t) => s + Number(t.amount), 0);
-  const net      = income - spent - invested.reduce((s, t) => s + Number(t.amount), 0);
-
-  // ── CHANGED: hero shows net-of-reimbursements; label flips; subtitle added ─
+  // Net uses the same reimbursement-adjusted spend as the hero card (fix: was ignoring manual reimbursements)
   const linkedR = cache.linkedReimb || 0, manualR = cache.settledReimb || 0;
   const reimbursed = linkedR + manualR;
   const netSpent = Math.max(0, spent - manualR);
+  const net      = income - netSpent - invested.reduce((s, t) => s + Number(t.amount), 0);
+
+  // ── CHANGED: hero shows net-of-reimbursements; label flips; subtitle added ─
   $('hero-spent').textContent = inr(netSpent);
   document.querySelector('.ribbon-label').textContent =
     reimbursed > 0 ? 'Out of pocket' : 'Spent this month';
@@ -2241,7 +2242,8 @@ function renderMatches(matches) {
 }
 
 async function confirmMatch(debtId, creditId) {
-  if (await sbUpdate('debts', debtId, { status: 'settled', settled_date: new Date().toISOString() }) === null) return;
+  const _d = await sbGet('debts', `id=eq.${encodeURIComponent(debtId)}&select=amount`);
+  if (await sbUpdate('debts', debtId, { status: 'settled', settled_date: new Date().toISOString(), amount_settled: Number(_d?.[0]?.amount || 0) }) === null) return;
   await sbUpdate('transactions', creditId, { category: 'Transfer' });
   toast('Marked as settled');
   loadPeople(); loadHome();
