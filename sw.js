@@ -1,10 +1,11 @@
 // Ledger service worker
 // Scope: the app shell only (this HTML file, its manifest, its icons).
-// Nothing about your data is ever cached here — every request to Supabase,
-// Gemini, or CoinDCX is cross-origin and this worker never touches it, so
-// numbers on screen always come from the network, never from a stale cache.
+// Nothing about your data is ever cached here: every request to Supabase or
+// Gemini is cross-origin and this worker never touches it, so numbers on
+// screen always come from the network, never from a stale cache.
 
-const CACHE_NAME = 'ledger-shell-v1';
+// Bump this whenever the shell caching logic changes so old caches are purged.
+const CACHE_NAME = 'ledger-shell-v2';
 const SHELL_URLS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', event => {
@@ -23,12 +24,23 @@ self.addEventListener('activate', event => {
   );
 });
 
+// Store a successful same-origin response. The clone MUST be taken
+// synchronously, before the original is handed back to the page, because a
+// body that has already been read cannot be cloned afterwards.
+function stash(event, key, res) {
+  if (!res || !res.ok || res.type !== 'basic') return;
+  const copy = res.clone();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.put(key, copy)).catch(() => {})
+  );
+}
+
 self.addEventListener('fetch', event => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Only ever intervene for same-origin GETs (the shell). Everything else —
-  // any cross-origin call, any non-GET — is left completely alone so it
+  // Only ever intervene for same-origin GETs (the shell). Everything else
+  // (any cross-origin call, any non-GET) is left completely alone so it
   // hits the network exactly as if this worker didn't exist.
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
 
@@ -37,10 +49,7 @@ self.addEventListener('fetch', event => {
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req)
-        .then(res => {
-          caches.open(CACHE_NAME).then(cache => cache.put('./index.html', res.clone()));
-          return res;
-        })
+        .then(res => { stash(event, './index.html', res); return res; })
         .catch(() => caches.match('./index.html'))
     );
     return;
@@ -48,9 +57,6 @@ self.addEventListener('fetch', event => {
 
   // Everything else in the shell (icons, manifest): cache-first, network fallback.
   event.respondWith(
-    caches.match(req).then(cached => cached || fetch(req).then(res => {
-      caches.open(CACHE_NAME).then(cache => cache.put(req, res.clone()));
-      return res;
-    }))
+    caches.match(req).then(cached => cached || fetch(req).then(res => { stash(event, req, res); return res; }))
   );
 });
