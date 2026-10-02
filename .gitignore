@@ -1,0 +1,29 @@
+# Secrets / local config
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Personal financial data: never commit statements or exports
+*.csv
+*.tsv
+*.xls
+*.xlsx
+*.ods
+statements/
+exports/
+groww*/
+*groww*.pdf
+*statement*.pdf
+
+# Vercel / tooling
+.vercel/
+node_modules/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
