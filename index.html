@@ -72,7 +72,7 @@
   --cat-Food:#FF8A65; --cat-Transport:#4DD0E1; --cat-Shopping:#BA68C8;
   --cat-Groceries:#81C784; --cat-Household:#FFD54F; --cat-Health:#F06292;
   --cat-Entertainment:#4FC3F7; --cat-Subscriptions:#9575CD; --cat-Transfer:#90A4AE;
-  --cat-Investment:#7CE8B3; --cat-Income:#69F0AE; --cat-Other:#78909C;
+  --cat-Investment:#7CE8B3; --cat-Income:#69F0AE; --cat-Vices:#A1887F; --cat-Other:#78909C;
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bot: env(safe-area-inset-bottom, 0px);
@@ -1334,10 +1334,10 @@ let GM_KEY = localStorage.getItem('gemini_key') || '';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const CATS = ['Food','Groceries','Transport','Shopping','Household','Health',
-              'Entertainment','Subscriptions','Transfer','Investment','Other'];
+              'Entertainment','Subscriptions','Transfer','Investment','Vices','Other'];
 const EMOJI = {
   Food:'🍜', Groceries:'🛒', Transport:'🛺', Shopping:'🛍', Household:'🏠', Health:'💊',
-  Entertainment:'🎟', Subscriptions:'↻', Transfer:'⇄', Investment:'▲', Income:'₹', Other:'·'
+  Entertainment:'🎟', Subscriptions:'↻', Transfer:'⇄', Investment:'▲', Income:'₹', Vices:'🚬', Other:'·'
 };
 
 const catColor = c => getComputedStyle(document.documentElement)
