@@ -371,6 +371,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .row-mid { flex: 1; min-width: 0; }
 .row-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--md-sys-color-on-surface); }
 .row-sub { font-size: 12.5px; color: var(--md-sys-color-on-surface-variant); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
+.row-desc { font-size: 13px; color: var(--md-sys-color-on-surface); opacity: .82; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
 .row-right { text-align: right; flex: none; }
 .row-amt { font-size: 15px; font-weight: 600; }
 .row-bal { font-size: 11px; color: var(--md-sys-color-outline); margin-top: 3px; }
@@ -776,6 +777,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .field { margin-bottom: 15px; }
 .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--md-sys-color-on-surface-variant); margin-bottom: 6px; }
+.field label .opt { font-weight: 500; color: var(--md-sys-color-outline); }
 .field input, .field select {
   width: 100%;
   background: var(--md-sys-color-surface-container-high);
@@ -993,7 +995,7 @@ body { background-attachment: scroll !important; }
     <div class="filters">
       <div class="search">
         <span class="material-symbols-rounded ic">search</span>
-        <input id="search" placeholder="Search merchant, note or category" autocomplete="off" />
+        <input id="search" placeholder="Search merchant, description or category" autocomplete="off" />
       </div>
       <div class="chips-wrap" id="chips-wrap">
         <div class="chips" id="chips"></div>
@@ -1168,7 +1170,8 @@ body { background-attachment: scroll !important; }
     <div class="field"><label for="exp-amount">Amount (₹)</label><input id="exp-amount" type="number" step="0.01" inputmode="decimal" placeholder="0" /></div>
     <div class="field"><label for="exp-date">Date</label><input id="exp-date" type="date" /></div>
   </div>
-  <div class="field"><label for="exp-merchant">Merchant or description</label><input id="exp-merchant" type="text" placeholder="Bottle Lab, auto fare…" /></div>
+  <div class="field"><label for="exp-merchant">Merchant</label><input id="exp-merchant" type="text" placeholder="Bottle Lab, Zepto, auto driver…" /></div>
+  <div class="field"><label for="exp-note">Description <span class="opt">· what was this for?</span></label><input id="exp-note" type="text" maxlength="200" autocomplete="off" placeholder="Lunch with friends, birthday gift…" /></div>
   <div class="field"><label for="exp-category">Category</label><select id="exp-category"></select></div>
   <div class="field"><label class="check"><input type="checkbox" id="exp-reimb" /> Parents will reimburse this</label></div>
   <div class="field"><label class="check"><input type="checkbox" id="exp-remember" /> Remember this merchant → auto-categorise next time</label></div>
@@ -1231,7 +1234,8 @@ body { background-attachment: scroll !important; }
     <div class="field"><label for="rcv-amount">Amount (₹)</label><input id="rcv-amount" type="number" step="0.01" inputmode="decimal" placeholder="0" /></div>
     <div class="field"><label for="rcv-date">Date</label><input id="rcv-date" type="date" /></div>
   </div>
-  <div class="field"><label for="rcv-from">From / description</label><input id="rcv-from" type="text" placeholder="Aadit, Swiggy refund, pocket money…" /></div>
+  <div class="field"><label for="rcv-from">From</label><input id="rcv-from" type="text" placeholder="Aadit, Swiggy refund, pocket money…" /></div>
+  <div class="field"><label for="rcv-note">Description <span class="opt">· what was this for?</span></label><input id="rcv-note" type="text" maxlength="200" autocomplete="off" placeholder="Share of dinner, refund for cancelled order…" /></div>
   <input id="rcv-id" type="hidden" />
   <div class="field"><label for="rcv-reimb">Is this a reimbursement?</label><select id="rcv-reimb"><option value="">Not a reimbursement</option></select></div>
   <div class="field"><label for="rcv-category">Category</label><select id="rcv-category">
@@ -1616,12 +1620,13 @@ function txnRow(t, actions = false) {
   const cat = t.category || 'Other';
   const colour = catColor(cat);
   const name = t.merchant_display || t.merchant_raw || 'Transfer';
-  const sub = [fmtDateTime(t.txn_date), t.note].filter(Boolean).join(' · ');
+  const sub = fmtDateTime(t.txn_date);
   return `
   <div class="row tappable" data-row="${esc(t.id)}" data-txn="1" data-act="${debit ? 'edit-expense' : 'edit-received'}" data-id="${esc(t.id)}">
     <div class="chip-dot" style="background:${colour}26;color:${colour}">${EMOJI[cat] || '·'}</div>
     <div class="row-mid">
       <div class="row-name">${esc(name)}</div>
+      ${t.note ? `<div class="row-desc">${esc(t.note)}</div>` : ''}
       <div class="row-sub">${esc(sub)}</div>
     </div>
     <div class="row-right">
@@ -2371,6 +2376,7 @@ function resetExpenseSheet() {
   $('parsed').style.display = 'none';
   $('exp-reimb').checked = false;
   $('exp-remember').checked = false;
+  $('exp-note').value = '';
 }
 
 function openAddExpense() {
@@ -2390,6 +2396,7 @@ function openEditExpense(id) {
   $('exp-id').value = t.id;
   $('exp-amount').value = t.amount_gross ?? t.amount;
   $('exp-merchant').value = t.merchant_display || t.merchant_raw || '';
+  $('exp-note').value = t.note || '';
   $('exp-date').value = dateOnly(t.txn_date); $('exp-date').dataset.orig = $('exp-date').value;
   $('exp-category').value = CATS.includes(t.category) ? t.category : 'Other';
   $('exp-reimb').checked = !!t.is_reimbursable;
@@ -2399,6 +2406,7 @@ function openEditExpense(id) {
 
 function resetReceivedSheet() {
   $('rcv-id').value = '';
+  $('rcv-note').value = '';
   document.querySelector('#m-received .sheet-title span').textContent = 'Record money received';
 }
 function openEditReceived(id) {
@@ -2408,6 +2416,7 @@ function openEditReceived(id) {
   document.querySelector('#m-received .sheet-title span').textContent = 'Edit money received';
   $('rcv-id').value = t.id; $('rcv-amount').value = t.amount;
   $('rcv-from').value = t.merchant_display || t.merchant_raw || '';
+  $('rcv-note').value = t.note || '';
   $('rcv-date').value = dateOnly(t.txn_date); $('rcv-date').dataset.orig = $('rcv-date').value;
   $('rcv-category').value = [...$('rcv-category').options].some(o => o.value === t.category) ? t.category : 'Other';
   openModal('m-received');
@@ -2429,19 +2438,20 @@ async function saveExpense() {
 async function _saveExpense() {
   const amount   = parseFloat($('exp-amount').value);
   const merchant = $('exp-merchant').value.trim();
+  const note     = $('exp-note').value.trim();
   const date     = $('exp-date').value;
   const reimb    = $('exp-reimb').checked;
   const remember = $('exp-remember').checked;
   const id       = $('exp-id').value;
   let category   = $('exp-category').value;
   if (!(amount > 0)) { toast('Enter amount above zero', true); return; }
-  if (!merchant)     { toast('Add a merchant description', true); return; }
+  if (!merchant)     { toast('Add a merchant', true); return; }
   if (!date)         { toast('Select a date', true); return; }
   if (navigator.onLine && GM_KEY && category === 'Other') category = (await aiCategorise(merchant)) || 'Other';
   const txn_date = dateOnly(date);
   if (remember) await rememberMerchant(merchant, category);
   if (id) {
-    const ok = await sbUpdate('transactions', id, { amount, merchant_display: merchant, category, ...(date !== $('exp-date').dataset.orig ? { txn_date } : {}), is_reimbursable: reimb });
+    const ok = await sbUpdate('transactions', id, { amount, merchant_display: merchant, note: note || null, category, ...(date !== $('exp-date').dataset.orig ? { txn_date } : {}), is_reimbursable: reimb });
     if (ok === null) return;
 
     const linked = await sbGet('household_reimbursements', `txn_id=eq.${encodeURIComponent(id)}&status=eq.pending&limit=1`);
@@ -2459,7 +2469,8 @@ async function _saveExpense() {
   } else {
     const row = {
       type: 'debit', amount, merchant_raw: merchant, merchant_display: merchant,
-      category, txn_date, is_reimbursable: reimb, sms_raw: 'manual_entry'
+      category, txn_date, is_reimbursable: reimb, sms_raw: 'manual_entry',
+      ...(note ? { note } : {})
     };
     const res = navigator.onLine ? await sbInsert('transactions', row) : null;
     if (res === null) {
@@ -2682,31 +2693,33 @@ async function saveLink() {
 async function saveReceived() {
   const amount = parseFloat($('rcv-amount').value);
   const from   = $('rcv-from').value.trim();
+  const note   = $('rcv-note').value.trim();
   const date   = $('rcv-date').value;
   if (!(amount > 0)) { toast('Enter amount above zero', true); return; }
-  if (!from)         { toast('Add description or payer', true); return; }
+  if (!from)         { toast('Add who it was from', true); return; }
   if (!date)         { toast('Select a date', true); return; }
   const eid = $('rcv-id').value;
   if (eid) {
-    if (await sbUpdate('transactions', eid, { amount, merchant_raw: from, merchant_display: from, category: $('rcv-category').value,
+    if (await sbUpdate('transactions', eid, { amount, merchant_raw: from, merchant_display: from, note: note || null, category: $('rcv-category').value,
       ...(date !== $('rcv-date').dataset.orig ? { txn_date: dateOnly(date) } : {}) }) === null) return;
     closeModal('m-received'); toast('Updated'); loadHome(); loadPeople(); return;
   }
   const rid = $('rcv-reimb').value;
   const rrow = { type: 'credit', amount, merchant_raw: from, merchant_display: from,
-    category: rid ? 'Reimbursement' : $('rcv-category').value, txn_date: dateOnly(date), sms_raw: 'manual_entry' };
+    category: rid ? 'Reimbursement' : $('rcv-category').value, txn_date: dateOnly(date), sms_raw: 'manual_entry',
+    ...(note ? { note } : {}) };
   const rres = (!navigator.onLine && !rid) ? null : await sbInsert('transactions', rrow);
   if (rres === null) {
     if (!rid && (!navigator.onLine || _netErr)) {
       enqueueTxn(rrow); closeModal('m-received');
-      ['rcv-amount','rcv-from'].forEach(k => $(k).value = '');
+      ['rcv-amount','rcv-from','rcv-note'].forEach(k => $(k).value = '');
       toast("Saved offline — will sync when you're back online");
     }
     return;
   }
   if (rid) await settleReimbWith(rid, amount, dateOnly(date), rres?.[0]?.id);
   closeModal('m-received');
-  ['rcv-amount','rcv-from'].forEach(k => $(k).value = '');
+  ['rcv-amount','rcv-from','rcv-note'].forEach(k => $(k).value = '');
   toast(`+₹${inr(amount)} recorded`);
   loadHome(); loadPeople();
 }
