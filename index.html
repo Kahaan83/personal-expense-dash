@@ -141,6 +141,7 @@ input, select, textarea { font: inherit; color: inherit; }
   -webkit-overflow-scrolling: touch;
   padding-bottom: calc(108px + var(--safe-bot));
   scroll-padding-top: var(--safe-top);
+  overscroll-behavior-y: contain;
 }
 .screen.active { display: block; }
 
@@ -847,6 +848,14 @@ body { background-attachment: scroll !important; }
 .row[data-txn="1"] { touch-action: pan-y; will-change: transform; }
 #net-bar { position: fixed; top: env(safe-area-inset-top, 0px); left: 50%; transform: translateX(-50%); margin-top: 6px; z-index: 90; background: var(--md-sys-color-surface-container-highest); color: var(--md-sys-color-on-surface); border: 1px solid var(--glass-border); border-radius: var(--r-full); padding: 6px 14px; font-size: 12px; font-weight: 600; }
 #net-bar[hidden] { display: none; }
+/* pull-to-refresh indicator */
+#ptr { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 8px); left: 50%; width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--r-full); background: var(--md-sys-color-surface-container-highest); border: 1px solid var(--glass-border); color: var(--md-sys-color-on-surface-variant); box-shadow: 0 4px 14px rgba(0,0,0,0.35); opacity: 0; transform: translate(-50%, -44px); pointer-events: none; z-index: 15; }
+#ptr .material-symbols-rounded { transform: rotate(calc(var(--p, 0) * 300deg)); }
+#ptr.armed, #ptr.spin { color: var(--md-sys-color-primary); }
+@media (prefers-reduced-motion: no-preference) {
+  #ptr.spin .material-symbols-rounded { animation: ptrSpin .8s linear infinite; }
+  @keyframes ptrSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+}
 /* touch + legibility */
 .monthpick button, .row .actions button, .mini, .match-row button { min-width: 44px; min-height: 44px; }
 .overlay .sheet { max-height: 90dvh; }
@@ -1288,6 +1297,7 @@ body { background-attachment: scroll !important; }
 </div></div>
 
 <button id="net-bar" hidden></button>
+<div id="ptr" aria-hidden="true"><span class="material-symbols-rounded">refresh</span></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -3028,6 +3038,97 @@ if ('serviceWorker' in navigator) {
     _toast(msg, bad);
     if (!bad && /^(Settled|Marked as settled|Linked — marked as paid|\+₹)/.test(String(msg))) confetti();
   };
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   PULL TO REFRESH
+   Pull down on any tab (except Settings) while it is scrolled to the top.
+   ═══════════════════════════════════════════════════════════════ */
+(() => {
+  const ind = $('ptr');
+  if (!ind) return;
+  const TRIGGER = 64, HOLD = 56, MAX = 120, RESIST = 0.55, DEADZONE = 6;
+  const LOADERS = {
+    home:     () => loadHome(),
+    expenses: () => loadExpenses(),
+    invest:   () => loadPortfolio(),
+    people:   () => loadPeople()
+  };
+  const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let st = null, busy = false;
+
+  function paint(scr, pull, animate) {
+    const tr = animate && !reduceMotion();
+    scr.style.transition = tr ? 'transform .25s var(--ease-m3)' : 'none';
+    scr.style.transform = pull ? `translateY(${pull}px)` : '';
+    ind.style.transition = tr ? 'transform .25s var(--ease-m3), opacity .25s' : 'none';
+    ind.style.transform = `translate(-50%, ${pull - 44}px)`;
+    ind.style.opacity = String(Math.min(1, pull / (TRIGGER * 0.7)));
+    ind.style.setProperty('--p', String(Math.min(1, pull / TRIGGER)));
+  }
+  function release(scr) {
+    ind.classList.remove('armed');
+    paint(scr, 0, true);
+    setTimeout(() => { scr.style.transition = ''; ind.style.transition = ''; }, 320);
+  }
+
+  async function refresh(s) {
+    busy = true;
+    paint(s.scr, HOLD, true);
+    ind.classList.add('spin');
+    const t0 = Date.now();
+    try {
+      if (!navigator.onLine) toast("You're offline — can't refresh", true);
+      else if (s.tab === 'invest' && estimatedIds.size) toast('Save your price estimates before refreshing', true);
+      else {
+        if (qLoad().length) await flushQueue();
+        await (LOADERS[s.tab] || (() => {}))();
+      }
+    } catch (err) { console.error('Pull to refresh', err); toast('Refresh failed', true); }
+    // keep the spinner up long enough to be seen
+    setTimeout(() => { ind.classList.remove('spin'); release(s.scr); busy = false; }, Math.max(0, 500 - (Date.now() - t0)));
+  }
+
+  document.addEventListener('touchstart', e => {
+    st = null;
+    if (busy || e.touches.length !== 1) return;
+    if (document.querySelector('.overlay.open')) return;
+    if (!(e.target instanceof Element)) return;
+    const ae = document.activeElement;                       // typing (keyboard open): leave touches alone
+    if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
+    const scr = e.target.closest('.screen.active');
+    if (!scr || scr.id === 'screen-settings' || scr.scrollTop > 0) return;
+    const t = e.touches[0];
+    st = { scr, tab: scr.id.replace('screen-', ''), x: t.clientX, y: t.clientY, pull: 0, on: false, armed: false };
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    if (!st) return;
+    const t = e.touches[0], dx = t.clientX - st.x, dy = t.clientY - st.y;
+    if (!st.on) {
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) { st = null; return; } // horizontal: row swipe / chips
+      if (dy < -4 || st.scr.scrollTop > 0) { st = null; return; }                 // normal scrolling
+      if (dy < DEADZONE) return;
+      st.on = true;
+    }
+    if (st.scr.scrollTop > 0) { release(st.scr); st = null; return; }
+    if (e.cancelable) e.preventDefault();
+    st.pull = Math.max(0, Math.min(MAX, (dy - DEADZONE) * RESIST));
+    const armed = st.pull >= TRIGGER;
+    if (armed !== st.armed) {
+      st.armed = armed; ind.classList.toggle('armed', armed);
+      if (armed) { try { navigator.vibrate && navigator.vibrate(8); } catch {} }
+    }
+    paint(st.scr, st.pull, false);
+  }, { passive: false });
+
+  const end = commit => {
+    const s = st; st = null;
+    if (!s || !s.on) return;
+    if (commit && s.pull >= TRIGGER) refresh(s); else release(s.scr);
+  };
+  document.addEventListener('touchend', () => end(true), { passive: true });
+  document.addEventListener('touchcancel', () => end(false), { passive: true });
 })();
 </script>
 </body>
