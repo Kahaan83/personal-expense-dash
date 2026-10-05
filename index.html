@@ -3005,9 +3005,14 @@ if ('serviceWorker' in navigator) {
     scr.querySelectorAll('.rows, .breakdown').forEach(c => [...c.children].forEach((r, i) => r.style.setProperty('--i', Math.min(i, 10))));
   };
   document.querySelectorAll('.screen').forEach(scr => {
-    let timer;
+    let timer, wasActive = scr.classList.contains('active');
     new MutationObserver(() => {
-      if (!scr.classList.contains('active')) return;
+      // Only react to a real active/inactive change. Adding/removing 'enter' below also
+      // fires this observer; without this guard it re-triggers itself forever and freezes the page.
+      const isActive = scr.classList.contains('active');
+      if (isActive === wasActive) return;
+      wasActive = isActive;
+      if (!isActive) return;
       scr.classList.add('enter'); stagger(scr);
       clearTimeout(timer); timer = setTimeout(() => scr.classList.remove('enter'), 1500);
     }).observe(scr, { attributes: true, attributeFilter: ['class'] });
