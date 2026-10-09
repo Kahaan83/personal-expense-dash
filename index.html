@@ -1341,6 +1341,8 @@ const EMOJI = {
   Entertainment:'🎟', Subscriptions:'↻', Transfer:'⇄', Investment:'▲', Income:'₹', Vices:'🚬', Navratri:'🪔', Other:'·'
 };
 
+// Rows ingested from SMS can carry the label 'Uncategorized' (not in CATS) — treat it as 'Other'
+const normTxns = a => Array.isArray(a) ? a.map(t => t && t.category === 'Uncategorized' ? { ...t, category: 'Other' } : t) : a;
 const catColor = c => getComputedStyle(document.documentElement)
   .getPropertyValue('--cat-' + c).trim() || '#78909C';
 
@@ -1684,7 +1686,7 @@ async function loadHome() {
     else { const d = new Date(x.created_at); if (d.getFullYear() === view.year && d.getMonth() === view.month) manual += Number(x.amount); }
   });
   // reimbursed expenses count as "spent" for 0 in the month they happened; gross kept in amount_gross
-  cache.month = txns.map(t => {
+  cache.month = normTxns(txns).map(t => {
     const rb = t.type === 'debit' ? (cache.reimbByTxn[String(t.id)] || 0) : 0;
     if (!rb) return t;
     const eff = Math.max(0, Number(t.amount) - rb); linked += Number(t.amount) - eff;
@@ -1756,8 +1758,8 @@ function renderHomeRecent() {
 async function loadMoreMonth() {
   const [start, end] = monthRangeISO(view.year, view.month);
   const offset = (cache.monthPage || 1) * EXP_PAGE_SIZE;
-  const more = await sbGet('transactions',
-    `txn_date=gte.${start}&txn_date=lt.${end}&order=txn_date.desc&limit=${EXP_PAGE_SIZE}&offset=${offset}`);
+  const more = normTxns(await sbGet('transactions',
+    `txn_date=gte.${start}&txn_date=lt.${end}&order=txn_date.desc&limit=${EXP_PAGE_SIZE}&offset=${offset}`));
   if (!more) return;
   const seen = new Set(cache.month.map(t => String(t.id)));
   cache.month = [...cache.month, ...more.filter(t => !seen.has(String(t.id)))];
@@ -1925,7 +1927,7 @@ async function loadExpenses() {
 
   const [start, end] = monthRangeISO(view.year, view.month);
   const q = `txn_date=gte.${start}&txn_date=lt.${end}&type=eq.debit&order=txn_date.desc&limit=${EXP_PAGE_SIZE}`;
-  const txns = await sbGet('transactions', q);
+  const txns = normTxns(await sbGet('transactions', q));
   if (token !== expToken) return;
   if (!txns) { $('expense-rows').innerHTML = errState('Could not load expenses.'); return; }
   cache.expenses = txns;
@@ -1986,8 +1988,8 @@ function renderExpenseRows() {
 async function loadMoreExpenses() {
   const [start, end] = monthRangeISO(view.year, view.month);
   const offset = (cache.expPage || 1) * EXP_PAGE_SIZE;
-  const more = await sbGet('transactions',
-    `txn_date=gte.${start}&txn_date=lt.${end}&type=eq.debit&order=txn_date.desc&limit=${EXP_PAGE_SIZE}&offset=${offset}`);
+  const more = normTxns(await sbGet('transactions',
+    `txn_date=gte.${start}&txn_date=lt.${end}&type=eq.debit&order=txn_date.desc&limit=${EXP_PAGE_SIZE}&offset=${offset}`));
   if (!more) return;
   const seen = new Set(cache.expenses.map(t => String(t.id)));
   cache.expenses = [...cache.expenses, ...more.filter(t => !seen.has(String(t.id)))];
