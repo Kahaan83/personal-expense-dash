@@ -514,6 +514,7 @@ input, select, textarea { font: inherit; color: inherit; }
   color: var(--md-sys-color-on-warn-container);
 }
 .uncat-nudge button { font-weight: 700; text-decoration: underline; flex: none; }
+#gap-hint .uncat-nudge { margin: 8px 18px 0; align-items: flex-start; line-height: 1.4; }
 
 /* ── Portfolio & Holdings ──────────────────────────────────── */
 .pf-sec {
@@ -940,6 +941,8 @@ body { background-attachment: scroll !important; }
         </div>
       </div>
     </div>
+
+    <div id="gap-hint"></div>
 
     <!-- AI Insight Card -->
     <div class="ai" id="ai-card" style="display:none">
@@ -1708,8 +1711,46 @@ async function loadHome() {
   renderRibbon();
   renderHomeRecent();
   renderBreakdown();
+  checkSmsGaps(token);
   if (GM_KEY) loadInsight(false);
   else $('ai-card').style.display = 'none';
+}
+
+/* ── Missing-SMS detector ────────────────────────────────────────
+   Every bank SMS carries the balance after the transaction. For a row,
+   balance_before = balance_after ∓ amount, and that figure must equal the
+   balance_after of some earlier row. If it doesn't, an SMS never got logged. */
+const GAP_KEY = 'ledger_gap_dismissed';
+const GAP_BASE = 'ledger_gap_baseline';
+const gapDismissed = () => { try { return JSON.parse(localStorage.getItem(GAP_KEY) || '[]'); } catch { return []; } };
+async function checkSmsGaps(token) {
+  const el = $('gap-hint'); if (!el) return;
+  el.innerHTML = '';
+  if (!SB_URL || !SB_KEY || !navigator.onLine || !isThisMonth()) return;
+  const rows = await sb('transactions?select=id,type,amount,balance_after,created_at,txn_date'
+    + '&balance_after=not.is.null&order=created_at.desc&limit=200', { quiet: true });
+  if (token !== homeToken || !Array.isArray(rows) || rows.length < 2) return;
+  const cents = x => Math.round(Number(x) * 100);
+  const known = new Set(rows.map(r => cents(r.balance_after)));
+  const skip = new Set(gapDismissed());
+  // Only alert on rows that arrive after this device first ran the check, so old history doesn't raise alarms
+  let base = null;
+  try { base = localStorage.getItem(GAP_BASE); if (!base) { base = new Date().toISOString(); localStorage.setItem(GAP_BASE, base); } } catch {}
+  const cutoff = Math.max(Date.now() - 14 * 86400e3, base ? new Date(base).getTime() : 0);
+  const out = [];
+  for (let i = 0; i < rows.length - 1 && out.length < 3; i++) {
+    const r = rows[i];
+    if (skip.has(String(r.id)) || new Date(r.created_at).getTime() < cutoff) continue;
+    if (!Number.isFinite(cents(r.balance_after)) || !Number.isFinite(cents(r.amount))) continue;
+    const before = cents(r.balance_after) + (r.type === 'debit' ? 1 : -1) * cents(r.amount);
+    if (known.has(before)) continue;
+    const diff = (before - cents(rows[i + 1].balance_after)) / 100;
+    if (!diff) continue;
+    out.push(`<div class="uncat-nudge"><span>Balance doesn't add up before the ₹${inr(r.amount)} ${esc(r.type)} on ${esc(fmtDateTime(r.txn_date))} — `
+      + `about ₹${inr(Math.abs(diff))} ${diff > 0 ? 'received' : 'spent'} may be missing. Add it with +.</span>`
+      + `<button data-act="dismiss-gap" data-id="${esc(r.id)}">Dismiss</button></div>`);
+  }
+  el.innerHTML = out.join('');
 }
 
 function renderHomeStats() {
@@ -2904,6 +2945,7 @@ const ACTIONS = {
   'load-more-inv': () => loadMoreInvestments(),
   'toggle-lt':     () => $('lt-body').classList.toggle('open'),
   'toggle-pf':     el => togglePfGroup(el.dataset.group, el.dataset.container || 'holding-rows'),
+  'dismiss-gap':   el => { try { localStorage.setItem(GAP_KEY, JSON.stringify([...gapDismissed(), el.dataset.id])); } catch {} checkSmsGaps(homeToken); },
   'nl-parse':      () => parseNL(),
   'ai-refresh':    () => loadInsight(true),
   'open-supabase': () => { $('sb-url').value = SB_URL; $('sb-key').value = SB_KEY; openModal('m-supabase'); },
